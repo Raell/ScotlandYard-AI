@@ -58,6 +58,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
         
         for(PlayerConfiguration detective : detectives) {
             requireNonNull(detective);
+            if(detective.tickets.get(Ticket.DOUBLE) != 0 || detective.tickets.get(Ticket.SECRET) != 0)
+                throw new IllegalArgumentException("Detectives cannot have double or secret tickets");
+            
         }
         
     }
