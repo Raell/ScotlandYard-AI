@@ -23,6 +23,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private List<PlayerConfiguration> detectives;
     private List<Colour> players;
     private Colour currentPlayer;
+    private int currentRound;
 
     public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
                     PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -32,6 +33,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 throw new IllegalArgumentException("Empty rounds");
             }
             this.rounds = requireNonNull(rounds);
+            this.currentRound = 0;
             
             if(graph.isEmpty()) {
                 throw new IllegalArgumentException("Empty map");
@@ -103,11 +105,6 @@ public class ScotlandYardModel implements ScotlandYardGame {
                 if(detective.location == mrX.location)
                     throw new IllegalArgumentException("MrX and detective(s) overlap.");
             }
-        
-        /*if(!(playerNumTickets(mrX, Ticket.BUS, 3) && playerNumTickets(mrX, Ticket.DOUBLE, 2) && 
-                playerNumTickets(mrX, Ticket.TAXI, 4) && playerNumTickets(mrX, Ticket.SECRET, 5) && 
-                playerNumTickets(mrX, Ticket.UNDERGROUND, 3)) )
-            throw new IllegalArgumentException("MrX has the wrong number of tickets.");*/
     }
 
     @Override
@@ -160,8 +157,17 @@ public class ScotlandYardModel implements ScotlandYardGame {
     
     @Override
     public Optional<Integer> getPlayerLocation(Colour colour) {
-            Optional<Integer> loc = Optional.of(playerFromColour(colour).location);
-            return loc;
+            
+        PlayerConfiguration player = playerFromColour(colour);
+        
+        if(player != null) 
+            if(colour != Colour.BLACK)
+                return Optional.ofNullable(player.location);
+            else
+                return Optional.ofNullable(0);
+        else
+            return Optional.empty();
+            
     }
 
     @Override
@@ -170,7 +176,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
         PlayerConfiguration player = playerFromColour(colour);
         
         if(player != null) 
-            return Optional.ofNullable(playerFromColour(colour).tickets.get(ticket));
+            return Optional.ofNullable(player.tickets.get(ticket));
         else
             return Optional.empty();
                    
@@ -179,7 +185,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public boolean isGameOver() {
             // TODO
-            throw new RuntimeException("Implement me");
+            return false;
     }
 
     @Override
@@ -191,7 +197,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public int getCurrentRound() {
             // TODO
-            throw new RuntimeException("Implement me");
+            return currentRound;
     }
 
     @Override
