@@ -124,7 +124,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public List<Colour> getPlayers() {
             // TODO
-            throw new RuntimeException("Implement me");
+            return Collections.unmodifiableList(players);
     }
 
     @Override
