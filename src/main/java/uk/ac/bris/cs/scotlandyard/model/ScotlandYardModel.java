@@ -168,8 +168,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
     public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) {
         Optional<Integer> no = Optional.of(playerFromColour(colour).tickets.get(ticket));    
         return no;
+            
     }
-
+    
     @Override
     public boolean isGameOver() {
             // TODO
