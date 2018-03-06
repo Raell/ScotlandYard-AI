@@ -198,7 +198,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public Graph<Integer, Transport> getGraph() {
             // TODO
-            return new ImmutableGraph(graph);
+            return new ImmutableGraph<>(graph);
     }
 
 }
