@@ -22,6 +22,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Set<Colour> winningPlayer;
     private List<PlayerConfiguration> detectives;
     private List<Colour> players;
+    private Colour currentPlayer;
 
     public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
                     PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -38,6 +39,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
             this.graph = requireNonNull(graph);
             
             this.winningPlayer = new HashSet<>();
+            this.currentPlayer = Colour.BLACK;
             players = new ArrayList<>();
             
             List<PlayerConfiguration> detectives = new ArrayList<>();
@@ -148,12 +150,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
     private PlayerConfiguration playerFromColour(Colour colour) {
         if(colour.isMrX()) { return mrX; }
-        else if(colour.isDetective()) {
+        else {
             for(PlayerConfiguration detective : detectives) {
                 if(detective.colour == colour) return detective;
             }
-        } else {
-            throw new IllegalArgumentException("Colour invalid");
         }
         return null;
     }
@@ -166,9 +166,14 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
     @Override
     public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) {
-        Optional<Integer> no = Optional.of(playerFromColour(colour).tickets.get(ticket));    
-        return no;
-            
+        
+        PlayerConfiguration player = playerFromColour(colour);
+        
+        if(player != null) 
+            return Optional.ofNullable(playerFromColour(colour).tickets.get(ticket));
+        else
+            return Optional.empty();
+                   
     }
     
     @Override
@@ -180,7 +185,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public Colour getCurrentPlayer() {
             // TODO
-            throw new RuntimeException("Implement me");
+            return currentPlayer;
     }
 
     @Override
