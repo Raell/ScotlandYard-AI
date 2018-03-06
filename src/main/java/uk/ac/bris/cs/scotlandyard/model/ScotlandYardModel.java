@@ -20,6 +20,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
     private Graph<Integer, Transport> graph;
     private PlayerConfiguration mrX;
     private Set<Colour> winningPlayer;
+    private List<Colour> players;
 
     public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
                     PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -36,6 +37,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
             this.graph = requireNonNull(graph);
             
             this.winningPlayer = new HashSet<>();
+            players = new ArrayList<>();
             
             List<PlayerConfiguration> detectives = new ArrayList<>();
             detectives.add(firstDetective);
@@ -65,11 +67,13 @@ public class ScotlandYardModel implements ScotlandYardGame {
         
         this.mrX = mrX;
         mrXTicketValid(mrX.tickets);
+        players.add(Colour.BLACK);
         
         for(PlayerConfiguration detective : detectives) {
             requireNonNull(detective);
             if(isMissingTickets(detective, detective.tickets) || playerHasTicket(detective, Ticket.DOUBLE) || playerHasTicket(detective, Ticket.SECRET))
                 throw new IllegalArgumentException("Detectives cannot have double or secret tickets");
+            players.add(detective.colour);
             
         }
         
