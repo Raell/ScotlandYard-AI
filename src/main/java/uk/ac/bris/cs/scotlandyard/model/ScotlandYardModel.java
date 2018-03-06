@@ -47,6 +47,16 @@ public class ScotlandYardModel implements ScotlandYardGame {
             
     }
     
+    private boolean isMissingTickets(PlayerConfiguration player, Map<Ticket, Integer> tickets){
+        return(!(tickets.containsKey(Ticket.BUS) && tickets.containsKey(Ticket.DOUBLE) && 
+                tickets.containsKey(Ticket.SECRET) && tickets.containsKey(Ticket.TAXI) && 
+                tickets.containsKey(Ticket.UNDERGROUND)) );
+    }
+        
+    private boolean playerHasTicket(PlayerConfiguration player, Ticket ticket){
+        return(player.tickets.get(ticket) != 0);
+    }
+    
     private void playersValid(PlayerConfiguration mrX, List<PlayerConfiguration> detectives) {
         
         if(mrX.colour != Colour.BLACK) { // or mr.colour.isDetective()
@@ -58,18 +68,16 @@ public class ScotlandYardModel implements ScotlandYardGame {
         
         for(PlayerConfiguration detective : detectives) {
             requireNonNull(detective);
-            if(detective.tickets.get(Ticket.DOUBLE) != 0 || detective.tickets.get(Ticket.SECRET) != 0)
+            if(isMissingTickets(detective, detective.tickets) || playerHasTicket(detective, Ticket.DOUBLE) || playerHasTicket(detective, Ticket.SECRET))
                 throw new IllegalArgumentException("Detectives cannot have double or secret tickets");
             
         }
         
-    }
-    
+    } 
+  
     private void mrXTicketValid(Map<Ticket, Integer> tickets) {
         
-        if(!(tickets.containsKey(Ticket.BUS) && tickets.containsKey(Ticket.DOUBLE) && 
-                tickets.containsKey(Ticket.SECRET) && tickets.containsKey(Ticket.TAXI) && 
-                tickets.containsKey(Ticket.UNDERGROUND)))
+        if(isMissingTickets(mrX, tickets))
             throw new IllegalArgumentException("MrX is missing tickets");
         
         /*if(tickets.get(Ticket.BUS) != 3)
