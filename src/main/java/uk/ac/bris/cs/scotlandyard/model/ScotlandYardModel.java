@@ -26,6 +26,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private Set<Colour> winningPlayer;
     private List<ScotlandYardPlayer> detectives;
     private List<Colour> players;
+    private List<Spectator> spectators;
     private Colour currentPlayer;
     private int currentRound;
 
@@ -47,6 +48,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             this.winningPlayer = new HashSet<>();
             this.currentPlayer = Colour.BLACK;
             players = new ArrayList<>();
+            spectators = new ArrayList<>();
             
             List<ScotlandYardPlayer> detectives = new ArrayList<>();
             requireNonNull(firstDetective);
@@ -109,14 +111,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     @Override
     public void registerSpectator(Spectator spectator) {
-            // TODO
-            throw new RuntimeException("Implement me");
+            requireNonNull(spectator);
+            spectators.add(spectator);
     }
 
     @Override
     public void unregisterSpectator(Spectator spectator) {
-            // TODO
-            throw new RuntimeException("Implement me");
+            requireNonNull(spectator);
+            spectators.remove(spectator);
     }
     
     private boolean playerAtNode(Node node){
@@ -133,23 +135,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
     
     private Set<Move> mrXMoves(ScotlandYardPlayer player, Graph<Integer, Transport> graph) {
+
             Node locNode = graph.getNode(player.location());
 
             Collection<Edge> fromEdges = connectedEdges(locNode, graph);
-            Collection<Edge> doubleEdges = connectedEdges(locNode, graph);
             
             Set<Move> moves = new HashSet<>();
             
-            fromEdges.forEach((edge) -> {
-                //doubleEdges.addAll(connectedEdges(edge.destination(), graph));
-            });
-            
-            if(player.hasTickets(Ticket.DOUBLE)){
-                doubleEdges.forEach((edge) -> {
-                if(!playerAtNode(edge.destination()) && player.hasTickets(Ticket.fromTransport((Transport) edge.data())))
-                    moves.add(new TicketMove(player.colour(), Ticket.fromTransport((Transport) edge.data()), (Integer) edge.destination().value()));
-                });
-            } else if(player.hasTickets(Ticket.SECRET)){
+            if(player.hasTickets(Ticket.SECRET)){
                 fromEdges.forEach((edge) -> {
                     if(!playerAtNode(edge.destination()))
                         moves.add(new TicketMove(player.colour(), Ticket.SECRET, (Integer) edge.destination().value()));
@@ -160,7 +153,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                         moves.add(new TicketMove(player.colour(), Ticket.fromTransport((Transport) edge.data()), (Integer) edge.destination().value()));
                 });       
             }
-            //if(moves.isEmpty()) isGameOver();
+            
+            if(moves.isEmpty()) {
+                spectators.forEach((spectator) -> {
+                   spectator.onGameOver(this, winningPlayer);
+                });
+            }
             return moves;
     }
     
@@ -191,19 +189,24 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     
     @Override
     public void startRotate() {
-            System.out.println("THIS IS WITCHCRAFT");
             Colour player = getCurrentPlayer();
             players.forEach((cPlayer) -> {
+                currentRound += 1;
+                spectators.forEach((spectator) -> {
+                   spectator.onRoundStarted(this, currentRound);
+                });
                 ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
                 sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, graph), this);
+                
             });
-            
+            spectators.forEach((spectator) -> {
+                   spectator.onRotationComplete(this);
+                });
     }
 
     @Override
     public Collection<Spectator> getSpectators() {
-            // TODO
-            throw new RuntimeException("Implement me");
+            return spectators;
     }
 
     @Override
@@ -294,8 +297,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     @Override
     public void accept(Move move) {
-        
-        //throw new RuntimeException("Implement me"); //To change body of generated methods, choose Tools | Templates.
+        spectators.forEach((spectator) -> {
+                   spectator.onMoveMade(this, move);
+                });
     }
 
 }
