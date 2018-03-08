@@ -9,14 +9,16 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Node;
+import uk.ac.bris.cs.scotlandyard.ui.controller.Board;
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame {
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     
     private List<Boolean> rounds;
     private Graph<Integer, Transport> graph;
@@ -116,13 +118,86 @@ public class ScotlandYardModel implements ScotlandYardGame {
             // TODO
             throw new RuntimeException("Implement me");
     }
+    
+    private boolean playerAtNode(Node node){
+        for(ScotlandYardPlayer detective : detectives) {
+            if(detective.location() == (Integer) node.value()) return true;
+        }
+        return false;
+    }
+    
+    private Collection<Edge> connectedEdges(Node locNode, Graph<Integer, Transport> graph){
+        //gets connected edges
+        Collection<Edge> fromEdges = graph.getEdgesFrom(locNode);
+        return fromEdges;
+    }
+    
+    private Set<Move> mrXMoves(ScotlandYardPlayer player, Graph<Integer, Transport> graph) {
+            Node locNode = graph.getNode(player.location());
 
+            Collection<Edge> fromEdges = connectedEdges(locNode, graph);
+            Collection<Edge> doubleEdges = connectedEdges(locNode, graph);
+            
+            Set<Move> moves = new HashSet<>();
+            
+            fromEdges.forEach((edge) -> {
+                //doubleEdges.addAll(connectedEdges(edge.destination(), graph));
+            });
+            
+            if(player.hasTickets(Ticket.DOUBLE)){
+                doubleEdges.forEach((edge) -> {
+                if(!playerAtNode(edge.destination()) && player.hasTickets(Ticket.fromTransport((Transport) edge.data())))
+                    moves.add(new TicketMove(player.colour(), Ticket.fromTransport((Transport) edge.data()), (Integer) edge.destination().value()));
+                });
+            } else if(player.hasTickets(Ticket.SECRET)){
+                fromEdges.forEach((edge) -> {
+                    if(!playerAtNode(edge.destination()))
+                        moves.add(new TicketMove(player.colour(), Ticket.SECRET, (Integer) edge.destination().value()));
+                }); 
+            } else {  
+                fromEdges.forEach((edge) -> {
+                    if(!playerAtNode(edge.destination()) && player.hasTickets(Ticket.fromTransport((Transport) edge.data())))
+                        moves.add(new TicketMove(player.colour(), Ticket.fromTransport((Transport) edge.data()), (Integer) edge.destination().value()));
+                });       
+            }
+            //if(moves.isEmpty()) isGameOver();
+            return moves;
+    }
+    
+    private Set<Move> validMoves(ScotlandYardPlayer player, Graph<Integer, Transport> graph) {
+        Set<Move> moves = new HashSet<>();
+        
+        Node locNode = graph.getNode(player.location());
+        
+        Collection<Edge> fromEdges = connectedEdges(locNode, graph);
+        
+        if(player.isMrX()){
+            
+            moves.addAll(mrXMoves(player, graph));
+            
+        } else if(player.isDetective()){
+            
+            fromEdges.forEach((edge) -> {
+                if(!playerAtNode(edge.destination()) && player.hasTickets(Ticket.fromTransport((Transport) edge.data())))
+                    moves.add(new TicketMove(player.colour(), Ticket.fromTransport((Transport) edge.data()), (Integer) edge.destination().value()));
+            });
+        
+        }
+        
+        if(moves.isEmpty()) moves.add(new PassMove(player.colour()));
+        
+        return moves;
+    }
+    
     @Override
     public void startRotate() {
-            for(ScotlandYardPlayer detective : detectives) {
-                if(detective.location() == mrX.location())
-                    throw new IllegalArgumentException("MrX and detective(s) overlap.");
-            }
+            System.out.println("THIS IS WITCHCRAFT");
+            Colour player = getCurrentPlayer();
+            players.forEach((cPlayer) -> {
+                ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
+                sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, graph), this);
+            });
+            
     }
 
     @Override
@@ -215,6 +290,12 @@ public class ScotlandYardModel implements ScotlandYardGame {
     @Override
     public Graph<Integer, Transport> getGraph() {
             return new ImmutableGraph<>(graph);
+    }
+
+    @Override
+    public void accept(Move move) {
+        
+        //throw new RuntimeException("Implement me"); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
