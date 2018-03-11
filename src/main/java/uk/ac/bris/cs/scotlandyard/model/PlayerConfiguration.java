@@ -36,6 +36,10 @@ public class PlayerConfiguration {
 		this.location = location;
 	}
 
+        public ScotlandYardPlayer toScotlandYardPlayer() {
+            return new ScotlandYardPlayer(player, colour, location, tickets);
+        }
+        
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("PlayerConfiguration{");

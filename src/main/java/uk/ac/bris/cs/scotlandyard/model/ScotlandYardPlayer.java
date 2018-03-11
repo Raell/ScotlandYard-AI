@@ -119,6 +119,12 @@ public class ScotlandYardPlayer {
 		return tickets.get(ticket) != 0;
 	}
 
+        public boolean isMissingTickets(){
+            return(!(this.tickets.containsKey(Ticket.BUS) && this.tickets.containsKey(Ticket.DOUBLE) && 
+                    this.tickets.containsKey(Ticket.SECRET) && this.tickets.containsKey(Ticket.TAXI) && 
+                    this.tickets.containsKey(Ticket.UNDERGROUND)) );
+        }
+            
 	/**
 	 * Checks whether the player has the given ticket and quantity
 	 *
