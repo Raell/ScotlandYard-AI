@@ -94,7 +94,6 @@ public class ModelRoundTest extends ParameterisedModelTestBase {
 		ScotlandYardGame game = createGame(mrX, blue);
 		game.registerSpectator(harness.createSpectator(ON_MOVE_MADE));
 		DoubleMove expected = x2(BLACK, taxi(32), taxi(19));
-
 		harness.play(game).startRotationAndAssertTheseInteractionsOccurInOrder(
 				player(BLACK).makeMove().willPick(expected),
 
