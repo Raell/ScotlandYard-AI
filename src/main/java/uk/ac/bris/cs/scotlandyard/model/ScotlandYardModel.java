@@ -75,8 +75,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         return locs;
     }
     
-    private void playersValid(ScotlandYardPlayer mrX, List<ScotlandYardPlayer> detectives) {
-        
+    private void playersValid(ScotlandYardPlayer mrX, List<ScotlandYardPlayer> detectives) {    
         
         if(mrX.isDetective()) { // or mr.colour.isDetective()
             throw new IllegalArgumentException("MrX should be Black");
@@ -93,9 +92,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         }
         
         if(detectiveLocations().size() != detectives.size())
-            throw new IllegalArgumentException("Player locations overlap.");
-        
-        
+            throw new IllegalArgumentException("Player locations overlap.");  
         
     } 
   
@@ -113,13 +110,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     @Override
     public void registerSpectator(Spectator spectator) {
             requireNonNull(spectator);
-            spectators.add(spectator);
+            if(!spectators.contains(spectator))
+                spectators.add(spectator);
+            else
+                throw new IllegalArgumentException("Already registered specator");
     }
 
     @Override
     public void unregisterSpectator(Spectator spectator) {
             requireNonNull(spectator);
-            spectators.remove(spectator);
+            if(spectators.contains(spectator))
+                spectators.remove(spectator);
+            else
+                throw new IllegalArgumentException("Invalid specatator");
     }
     
     private boolean playerAtNode(Node<Integer> node){
@@ -222,21 +225,32 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
             sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this);
             if(!callback)
-                break;
+                return;
         }
+        
+        if(currentRound == rounds.size() && !isGameOver()) {
+            gameOver(getMrXColours());
+            return;
+        }
+            
+        
         spectators.forEach((spectator) -> {
                spectator.onRotationComplete(this);
         });
-            
+                     
     }
     
     private Set<Colour> getDetectiveColours() {
-        return new HashSet<> (players.subList(1, players.size() - 1));      
+        return new HashSet<>(players.subList(1, players.size() - 1));      
+    }
+    
+    private Set<Colour> getMrXColours() {
+        return new HashSet<>(players.subList(0, 1));      
     }
 
     @Override
     public Collection<Spectator> getSpectators() {
-            return spectators;
+            return Collections.unmodifiableCollection(spectators);
     }
 
     @Override
@@ -323,45 +337,89 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     public Graph<Integer, Transport> getGraph() {
             return new ImmutableGraph<>(graph);
     }
-
+    
+    private Move hiddenMove(Move move) {
+            if(move.getClass() == DoubleMove.class)
+                return hiddenMove((DoubleMove) move);
+            else
+                return hiddenMove((TicketMove) move);
+    }
+    
+    private Move hiddenMove(DoubleMove move) {
+        int firstDes = 0;
+        int secondDes = 0;
+        if(rounds.get(currentRound)) {
+            firstDes = move.firstMove().destination();
+            if(!rounds.get(currentRound + 1))
+                secondDes = firstDes;
+        }
+        if(rounds.get(currentRound + 1))
+            secondDes = move.secondMove().destination();
+        return new DoubleMove(move.colour(), move.firstMove().ticket(), firstDes, move.secondMove().ticket(), secondDes);
+    }
+    
+    private Move hiddenMove(TicketMove move) {
+        int des = 0;
+        if(rounds.get(currentRound - 1))
+            des = move.destination();
+        return new TicketMove(move.colour(), move.ticket(), des);
+    }
+    
+    private void acceptMrXCallback(Move move, boolean partOfDoubleMove) {      
+        if(move.getClass() == TicketMove.class)
+            currentRound++;
+        
+        Move shownMove;
+        if(partOfDoubleMove)
+            shownMove = move;
+        else
+            shownMove = hiddenMove(move);
+        
+        for(Spectator spectator : spectators) {              
+            if(move.getClass() == TicketMove.class)
+                spectator.onRoundStarted(this, currentRound);
+            spectator.onMoveMade(this, shownMove);              
+         }       
+      
+        if(move.getClass() == DoubleMove.class) {
+            DoubleMove doubleMove = (DoubleMove) shownMove;
+            acceptMrXCallback(doubleMove.firstMove(), true);
+            acceptMrXCallback(doubleMove.secondMove(), true);
+            ScotlandYardPlayer player = playerFromColour(move.colour());
+            player.location(moveDestination(player, move)); 
+        }
+        else if(!partOfDoubleMove){
+            ScotlandYardPlayer player = playerFromColour(move.colour());
+            player.location(moveDestination(player, move)); 
+        }
+    }
+    
+    private void acceptDetectiveCallback(Move move) {
+        spectators.forEach((spectator) -> {
+            spectator.onMoveMade(this, move);
+        });
+        
+        ScotlandYardPlayer player = playerFromColour(move.colour());
+        player.location(moveDestination(player, move)); 
+        
+        if(detectiveLocations().contains(mrX.location())) {
+            gameOver(getDetectiveColours());
+        }
+    }
+    
     @Override
     public void accept(Move move) {
-        
         callback = true;
-        
         if(!isValidMove(playerFromColour(move.colour()), move))
             throw new IllegalArgumentException("Illegal Move");
         
         nextPlayer(move.colour());             
         
-        if(move.colour() == Colour.BLACK) {
-            //currentRound++;
-            spectators.forEach((spectator) -> {
-                spectator.onRoundStarted(this, currentRound);
-                spectator.onMoveMade(this, move);
-             });       
-            
-            currentRound++;
-        }
-        else {
-            spectators.forEach((spectator) -> {
-                spectator.onMoveMade(this, move);
-            });
-            
-            if(detectiveLocations().contains(mrX.location())) {
-                gameOver(getDetectiveColours());
-            }
-        }
-               
-        if(move.getClass() == DoubleMove.class) {
-            DoubleMove doubleMove = (DoubleMove) move;
-            accept(doubleMove.firstMove());
-            accept(doubleMove.secondMove());
-        }
+        if(move.colour() == Colour.BLACK)
+            acceptMrXCallback(move, false);
         
-        ScotlandYardPlayer player = playerFromColour(move.colour());
-        player.location(moveDestination(player, move));
-        
+        else
+            acceptDetectiveCallback(move);   
     }
     
     private int moveDestination(ScotlandYardPlayer player, Move move) {
