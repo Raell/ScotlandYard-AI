@@ -29,6 +29,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private Colour currentPlayer;
     private int currentRound;
     private boolean gameOver;
+    private boolean callback;
 
     public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
                     PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -146,7 +147,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         
         moves.addAll(tMoves);
 
-        if(player.hasTickets(Ticket.DOUBLE)){ 
+        if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
             Set<Move> doublemoves = new HashSet<>();
             for(TicketMove firstMove : tMoves) {                                      
                 
@@ -168,27 +169,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
     
     private Set<Move> validMoves(ScotlandYardPlayer player, int location) {
-        /*Set<Move> moves = new HashSet<>();
-        
-        Node<Integer> locNode = graph.getNode(location);
-        
-        Collection<Edge<Integer, Transport>> fromEdges = connectedEdges(locNode, graph);
-                 
-        for(Edge<Integer, Transport> edge : fromEdges) {
-            
-            if(!playerAtNode(edge.destination()) && player.hasTickets(Ticket.fromTransport(edge.data())))
-                moves.add(new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()));
-            
-        }
-        
-        if(player.isMrX())      
-            moves.addAll(mrXMoves(player, graph));           
-              
-        if(moves.isEmpty()) 
-            if(player.isDetective()) moves.add(new PassMove(player.colour()));
-            else gameOver(getDetectiveColours());
-        
-        return moves;*/
         Set<Move> moves = new HashSet<>();
         if(player.isMrX()) {
             moves.addAll(mrXMoves(player, location));
@@ -236,15 +216,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     
     @Override
     public void startRotate() {
-            //Colour player = getCurrentPlayer();
-            
-            players.forEach((cPlayer) -> {
-                ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
-                sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this);             
-            });
-            spectators.forEach((spectator) -> {
-                   spectator.onRotationComplete(this);
-            });
+                  
+        for(Colour cPlayer : players) {
+            callback = false;
+            ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
+            sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this);
+            if(!callback)
+                break;
+        }
+        spectators.forEach((spectator) -> {
+               spectator.onRotationComplete(this);
+        });
             
     }
     
@@ -306,16 +288,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                    
     }
     
-    /*private Set<Integer> getConnectedLocs(Integer loc) {
-        Node locNode = graph.getNode(loc);
-        Collection<Edge> fromEdges = graph.getEdgesFrom(locNode);
-        Set<Integer> setLocs = new HashSet<>();
-        for(Edge edge : fromEdges) {
-            setLocs.add((Integer) edge.destination().value());
-        }
-        return setLocs;
-    }*/
-    
     private void gameOver(Set<Colour> winners) {
         gameOver = true;
         winningPlayer = winners;
@@ -354,7 +326,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     @Override
     public void accept(Move move) {
-        System.out.println("Player " + move.colour() + " " + playerFromColour(move.colour()).location());
+        
+        callback = true;
+        
         if(!isValidMove(playerFromColour(move.colour()), move))
             throw new IllegalArgumentException("Illegal Move");
         
@@ -365,10 +339,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             spectators.forEach((spectator) -> {
                 spectator.onRoundStarted(this, currentRound);
                 spectator.onMoveMade(this, move);
-             }); 
-            
-            //if(move.getClass() == DoubleMove.class)
-                //currentRound++;      
+             });       
             
             currentRound++;
         }
@@ -381,8 +352,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                 gameOver(getDetectiveColours());
             }
         }
+               
+        if(move.getClass() == DoubleMove.class) {
+            DoubleMove doubleMove = (DoubleMove) move;
+            accept(doubleMove.firstMove());
+            accept(doubleMove.secondMove());
+        }
+        
         ScotlandYardPlayer player = playerFromColour(move.colour());
         player.location(moveDestination(player, move));
+        
     }
     
     private int moveDestination(ScotlandYardPlayer player, Move move) {
