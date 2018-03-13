@@ -29,6 +29,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private Colour currentPlayer;
     private final Set<Colour> stuckDetectives = new HashSet<>();
     private int currentRound;
+    private int lastRevealed;
     private boolean gameOver;
     private boolean callback;
 
@@ -41,6 +42,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
             this.rounds = requireNonNull(rounds);
             this.currentRound = NOT_STARTED;
+            this.lastRevealed = 0;
             
             if(graph.isEmpty()) {
                 throw new IllegalArgumentException("Empty map");
@@ -287,10 +289,13 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         ScotlandYardPlayer player = playerFromColour(colour);
         
         if(player != null) 
-            if(colour != Colour.BLACK)
+            if(colour != Colour.BLACK || (currentRound != 0 && rounds.get(currentRound - 1))) {
+                if(colour == Colour.BLACK)
+                    lastRevealed = player.location();
                 return Optional.ofNullable(player.location());
+            }
             else
-                return Optional.ofNullable(0);
+                return Optional.ofNullable(lastRevealed);
         else
             return Optional.empty();
             
