@@ -235,12 +235,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             callback = false;
             ScotlandYardPlayer sYPlayer = playerFromColour(cPlayer);
             sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this);
-            if(!callback)
+            if(!callback || gameOver)
                 return;
         }
         
-        if(gameOver)
+        /*if(gameOver) {
+            spectators.forEach((spectator) -> {
+                spectator.onGameOver(this, winningPlayer);
+            });
             return;
+        }*/
         
         spectators.forEach((spectator) -> {
                spectator.onRotationComplete(this);
@@ -249,7 +253,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
     
     private Set<Colour> getDetectiveColours() {
-        return new HashSet<>(players.subList(1, players.size() - 1));      
+        return new HashSet<>(players.subList(1, players.size()));      
     }
     
     private Set<Colour> getMrXColours() {
@@ -316,9 +320,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private void gameOver(Set<Colour> winners) {
         gameOver = true;
         winningPlayer = winners;
-        spectators.forEach((spectator) -> {
+        /*spectators.forEach((spectator) -> {
            spectator.onGameOver(this, winningPlayer);
-        });
+        });*/
     }
     
     @Override
@@ -370,21 +374,28 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
     
     private Move hiddenMove(TicketMove move) {
-        int des = 0;
-        if(rounds.get(currentRound - 1))
+        int des = lastRevealed;
+        if(currentRound > 0 && rounds.get(currentRound - 1))
             des = move.destination();
         return new TicketMove(move.colour(), move.ticket(), des);
     }
     
     private void acceptMrXCallback(Move move, boolean partOfDoubleMove) {      
+        
         if(move.getClass() == TicketMove.class)
             currentRound++;
         
         Move shownMove;
         if(partOfDoubleMove)
             shownMove = move;
-        else
+        else {
             shownMove = hiddenMove(move);
+            if(move.getClass() == TicketMove.class) {
+                TicketMove tMove = (TicketMove) move;
+                mrX.location(moveDestination(mrX, move));         
+                mrX.removeTicket(tMove.ticket());
+            }
+        }
         
         for(Spectator spectator : spectators) {              
             if(move.getClass() == TicketMove.class)
@@ -402,33 +413,29 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             mrX.removeTicket(doubleMove.firstMove().ticket());
             mrX.removeTicket(doubleMove.secondMove().ticket());
         }
-        else if(!partOfDoubleMove){
-            TicketMove tMove = (TicketMove) move;
-            mrX.location(moveDestination(mrX, move));         
-            mrX.removeTicket(tMove.ticket());
-        }
     }
     
     private void acceptDetectiveCallback(Move move) {
-  
-        spectators.forEach((spectator) -> {
-            spectator.onMoveMade(this, move);
-        });
         
         ScotlandYardPlayer player = playerFromColour(move.colour());
-        player.location(moveDestination(player, move));             
+        player.location(moveDestination(player, move));   
         
         if(move.getClass() == TicketMove.class) {
             TicketMove tMove = (TicketMove) move;
             player.removeTicket(tMove.ticket());
             mrX.addTicket(tMove.ticket());
         }
-        
+               
+              
         if(validMoves(player, player.location()).iterator().next().getClass() == PassMove.class)
             stuckDetectives.add(player.colour());
         
         if(detectiveLocations().contains(mrX.location()) || (currentPlayer == Colour.BLACK && validMoves(mrX, mrX.location()).isEmpty()))
             gameOver(getDetectiveColours());
+        
+        spectators.forEach((spectator) -> {
+            spectator.onMoveMade(this, move);
+        });
                
     }
     
@@ -448,7 +455,14 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         
         if(((currentPlayer.isMrX() && currentRound == rounds.size()) || stuckDetectives.size() == detectives.size()) && !isGameOver()) {
             gameOver(getMrXColours());
-        }        
+        } 
+        
+        if(gameOver) {
+            spectators.forEach((spectator) -> {
+                spectator.onGameOver(this, winningPlayer);
+            });
+        }
+        
     }
     
     private int moveDestination(ScotlandYardPlayer player, Move move) {
