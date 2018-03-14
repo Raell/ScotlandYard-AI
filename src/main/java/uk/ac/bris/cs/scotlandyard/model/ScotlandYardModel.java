@@ -292,8 +292,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                     lastRevealed = player.location();
                 return Optional.ofNullable(player.location());
             } 
-            else
+            else {
                 return Optional.ofNullable(lastRevealed);
+            }
         else
             return Optional.empty();
             
@@ -349,8 +350,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
     
     private Move hiddenMove(DoubleMove move) {
-        int firstDes = 0;
-        int secondDes = 0;
+        int firstDes = lastRevealed;
+        int secondDes = lastRevealed;
         if(rounds.get(currentRound)) {
             firstDes = move.firstMove().destination();
             if(!rounds.get(currentRound + 1))
