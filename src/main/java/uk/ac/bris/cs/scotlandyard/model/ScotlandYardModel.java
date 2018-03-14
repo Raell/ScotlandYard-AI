@@ -240,15 +240,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this);
             if(!callback || gameOver)
                 return;
-        }
-        
-        /*if(gameOver) {
-            spectators.forEach((spectator) -> {
-                spectator.onGameOver(this, winningPlayer);
-            });
-            return;
-        }*/
-        
+        }       
+              
         spectators.forEach((spectator) -> {
                spectator.onRotationComplete(this);
         });
@@ -270,13 +263,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
     @Override
     public List<Colour> getPlayers() {
-            // TODO
             return Collections.unmodifiableList(players);
     }
 
     @Override
     public Set<Colour> getWinningPlayers() {
-            // TODO
             return Collections.unmodifiableSet(winningPlayer);
     }
 
@@ -300,7 +291,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
                 if(colour == Colour.BLACK)
                     lastRevealed = player.location();
                 return Optional.ofNullable(player.location());
-            }
+            } 
             else
                 return Optional.ofNullable(lastRevealed);
         else
@@ -323,16 +314,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private void gameOver(Set<Colour> winners) {
         gameOver = true;
         winningPlayer = winners;
-        /*spectators.forEach((spectator) -> {
-           spectator.onGameOver(this, winningPlayer);
-        });*/
     }
     
     @Override
     public boolean isGameOver() {
-            //for(int i : detectiveLocations()) { System.out.println(i); }
-            //if(detectiveLocations().contains(mrX.location())) return true;
-            //else return false;
             return gameOver;
     }
 
@@ -389,21 +374,25 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             currentRound++;
         
         Move shownMove;
-        if(partOfDoubleMove)
+        if(partOfDoubleMove) {
             shownMove = move;
-        else {
+            TicketMove ticketMove = (TicketMove) move;
+            mrX.removeTicket(ticketMove.ticket());
+        } else {
             shownMove = hiddenMove(move);
             if(move.getClass() == TicketMove.class) {
                 TicketMove tMove = (TicketMove) move;
                 mrX.location(moveDestination(mrX, move));         
                 mrX.removeTicket(tMove.ticket());
+            } else {
+                mrX.removeTicket(Ticket.DOUBLE);
             }
         }
         
         for(Spectator spectator : spectators) {              
             if(move.getClass() == TicketMove.class)
                 spectator.onRoundStarted(this, currentRound);
-            spectator.onMoveMade(this, shownMove);              
+                spectator.onMoveMade(this, shownMove);              
         }            
       
         if(move.getClass() == DoubleMove.class) {
@@ -411,11 +400,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             acceptMrXCallback(doubleMove.firstMove(), true);
             acceptMrXCallback(doubleMove.secondMove(), true);
             ScotlandYardPlayer player = playerFromColour(move.colour());
-            player.location(moveDestination(player, move));
-            mrX.removeTicket(Ticket.DOUBLE);
-            mrX.removeTicket(doubleMove.firstMove().ticket());
-            mrX.removeTicket(doubleMove.secondMove().ticket());
+            player.location(moveDestination(player, move)); 
         }
+        
     }
     
     private void acceptDetectiveCallback(Move move) {
@@ -435,6 +422,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         
         if(detectiveLocations().contains(mrX.location()) || (currentPlayer == Colour.BLACK && validMoves(mrX, mrX.location()).isEmpty()))
             gameOver(getDetectiveColours());
+        
+        if(currentPlayer == Colour.BLACK && currentRound == rounds.size()) {
+            gameOver(getMrXColours());
+        }
         
         spectators.forEach((spectator) -> {
             spectator.onMoveMade(this, move);
