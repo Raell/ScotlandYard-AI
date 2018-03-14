@@ -368,39 +368,30 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         return new TicketMove(move.colour(), move.ticket(), des);
     }
     
-    private void acceptMrXCallback(Move move, boolean partOfDoubleMove) {      
+    private void acceptMrXCallback(Move move) {      
         
-        if(move.getClass() == TicketMove.class)
+        if(move.getClass() == TicketMove.class) {
             currentRound++;
-        
-        Move shownMove;
-        if(partOfDoubleMove) {
-            shownMove = move;
-            TicketMove ticketMove = (TicketMove) move;
-            mrX.removeTicket(ticketMove.ticket());
-        } else {
-            shownMove = hiddenMove(move);
-            if(move.getClass() == TicketMove.class) {
-                TicketMove tMove = (TicketMove) move;
-                mrX.location(moveDestination(mrX, move));         
-                mrX.removeTicket(tMove.ticket());
-            } else {
-                mrX.removeTicket(Ticket.DOUBLE);
-            }
+            TicketMove tMove = (TicketMove) move;
+            mrX.removeTicket(tMove.ticket());
+            mrX.location(moveDestination(mrX, move)); 
+        }
+        else {
+            mrX.removeTicket(Ticket.DOUBLE);
         }
         
+        Move shownMove = hiddenMove(move);
+                    
         for(Spectator spectator : spectators) {              
             if(move.getClass() == TicketMove.class)
                 spectator.onRoundStarted(this, currentRound);
-                spectator.onMoveMade(this, shownMove);              
+            spectator.onMoveMade(this, shownMove);              
         }            
       
         if(move.getClass() == DoubleMove.class) {
-            DoubleMove doubleMove = (DoubleMove) shownMove;           
-            acceptMrXCallback(doubleMove.firstMove(), true);
-            acceptMrXCallback(doubleMove.secondMove(), true);
-            ScotlandYardPlayer player = playerFromColour(move.colour());
-            player.location(moveDestination(player, move)); 
+            DoubleMove doubleMove = (DoubleMove) move;           
+            acceptMrXCallback(doubleMove.firstMove());
+            acceptMrXCallback(doubleMove.secondMove());
         }
         
     }
@@ -419,7 +410,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
               
         if(validMoves(player, player.location()).iterator().next().getClass() == PassMove.class)
             stuckDetectives.add(player.colour());
-        
+               
         if(detectiveLocations().contains(mrX.location()) || (currentPlayer == Colour.BLACK && validMoves(mrX, mrX.location()).isEmpty()))
             gameOver(getDetectiveColours());
         
@@ -442,7 +433,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         nextPlayer(move.colour());             
         
         if(move.colour() == Colour.BLACK)
-            acceptMrXCallback(move, false);
+            acceptMrXCallback(move);
         
         else
             acceptDetectiveCallback(move);
