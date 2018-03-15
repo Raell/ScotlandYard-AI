@@ -8,10 +8,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
@@ -32,7 +29,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private int currentRound;
     private int lastRevealed;
     private boolean gameOver;
-    private boolean callback;
 
     public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
                     PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -231,15 +227,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     
     @Override
     public void startRotate() {
-
         if(gameOver && currentRound == 0)
                 throw new IllegalStateException("Detectives cannot move");
         
         ScotlandYardPlayer currplayer = playerFromColour(currentPlayer);
-        currplayer.player().makeMove(this, currplayer.location(), validMoves(currplayer, currplayer.location()), this);
-
-        if(gameOver)
-            return;                
+        currplayer.player().makeMove(this, currplayer.location(), validMoves(currplayer, currplayer.location()), this);            
     }
     
     private Set<Colour> getDetectiveColours() {
