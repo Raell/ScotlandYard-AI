@@ -24,10 +24,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     private List<Spectator> spectators;
 
     private ScotlandYardPlayer mrX;
-    private List<ScotlandYardPlayer> detectives;
-    private Map<Colour, ScotlandYardPlayer> cToP;
+    private final List<ScotlandYardPlayer> detectives;
+    private final Map<Colour, ScotlandYardPlayer> cToP;
 
-    private List<Colour> players;
+    private final List<Colour> players;
     private Colour currentPlayer;
     private Set<Colour> winningPlayer;
     private final Set<Colour> stuckDetectives = new HashSet<>();
@@ -485,14 +485,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         
         //if the next player is a detective, call makeMove on them, otherwise
         //inform the spectators of rotation complete
-        if(!currentPlayer.isMrX() && !gameOver){
-            ScotlandYardPlayer sYPlayer = cToP.get(currentPlayer);
-            sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this); 
-        } else if(!gameOver){
-            spectators.forEach((spectator) -> {
-                spectator.onRotationComplete(this);
-            });
-        } else {
+        if(!gameOver){
+            if(!currentPlayer.isMrX()) {
+                ScotlandYardPlayer sYPlayer = cToP.get(currentPlayer);
+                sYPlayer.player().makeMove(this, sYPlayer.location(), validMoves(sYPlayer, sYPlayer.location()), this); 
+            }
+            else {
+                spectators.forEach((spectator) -> {
+                    spectator.onRotationComplete(this);
+                });
+            }
+        } 
+        
+        else {
             spectators.forEach((spectator) -> {
                 spectator.onGameOver(this, winningPlayer);
             });
