@@ -49,7 +49,7 @@ public class Athena implements PlayerFactory {
                         DoubleMove doubleMove = (DoubleMove) move;
                         TicketMove firstMove = (TicketMove) doubleMove.firstMove();
                         TicketMove secondMove = (TicketMove) doubleMove.secondMove();
-                        currentState.cToP.get(move.colour()).removeTicket(Ticket.DOUBLE);
+                        currentState.getColourMap().get(move.colour()).removeTicket(Ticket.DOUBLE);
                         next = nextState(currentState, firstMove, secondMove);
                     } else if(move.getClass() == TicketMove.class){
                         next = nextState(currentState, (TicketMove) move);      
@@ -60,21 +60,21 @@ public class Athena implements PlayerFactory {
                 }
                 
                 private GameState nextState(GameState currentState, TicketMove move){
-                    ScotlandYardPlayer player = currentState.cToP.get(move.colour());
+                    ScotlandYardPlayer player = currentState.getColourMap().get(move.colour());
                     player.removeTicket(move.ticket());
                     player.location(move.destination());
                     return currentState;
                 }
                 
                 private GameState nextState(GameState currentState, TicketMove firstMove, TicketMove secondMove){
-                    ScotlandYardPlayer player = currentState.cToP.get(secondMove.colour());
+                    ScotlandYardPlayer player = currentState.getColourMap().get(secondMove.colour());
                     player.removeTicket(firstMove.ticket());
                     player.removeTicket(secondMove.ticket());
                     player.location(secondMove.destination());
                     return currentState;
                 }
                 
-                private int distance(ScotlandYardView view, GameState state, int destination){
+                /*private int distance(ScotlandYardView view, GameState state, int destination){
                     ScotlandYardPlayer player = state.cToP.get(view.getCurrentPlayer());
                     Graph<Integer, Transport> graph = view.getGraph();
                     Node currentNode = graph.getNode(player.location());
@@ -92,7 +92,7 @@ public class Athena implements PlayerFactory {
                     }
 
                     return distance;
-                }
+                }*/
                 
                 
                 @Override
@@ -103,6 +103,7 @@ public class Athena implements PlayerFactory {
                         if(view.getCurrentRound() == 0) {
                             GameState initState = new GameState(view);
                             view.getPlayers().forEach(p -> initTickets.put(p, initState.getTickets(view, p)));
+                            //ValidMoves.setGraph(view.getGraph());
                         }
                         
                         
@@ -112,6 +113,14 @@ public class Athena implements PlayerFactory {
 		}
                 
                 private static class ValidMoves{
+                    Graph<Integer, Transport> graph;
+                    List<ScotlandYardPlayer> detectives;
+                    List<Boolean> rounds;
+                    
+                    private void setGraph(Graph<Integer, Transport> g) {
+                        graph = g;
+                    }
+                    
                     //checks whether a player has enough tickets to make the move
                     private static boolean hasValidTicket(ScotlandYardPlayer player, TicketMove move) {      
                         return player.hasTickets(move.ticket());
@@ -224,7 +233,11 @@ public class Athena implements PlayerFactory {
                         view.getPlayers().forEach(p -> players.add(makePlayer(view, p)));
                         cToP = coloursToPlayers();
                     }
-
+                    
+                    public Map<Colour, ScotlandYardPlayer> getColourMap() {
+                        return cToP;
+                    }
+                    
                     private Map<Ticket, Integer> getTickets(ScotlandYardView view, Colour colour){
                         Map<Ticket, Integer> m = new HashMap<>();
                         m.put(Ticket.BUS, view.getPlayerTickets(colour, Ticket.BUS).get());
