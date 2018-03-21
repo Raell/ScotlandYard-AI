@@ -43,6 +43,57 @@ public class Athena implements PlayerFactory {
 		private final Random random = new Random();
                 private final Map<Colour,Map<Ticket, Integer>> initTickets = new HashMap<>();
                 
+                private GameState nextState(GameState currentState, Move move){
+                    GameState next;
+                    if(move.getClass() == DoubleMove.class){
+                        DoubleMove doubleMove = (DoubleMove) move;
+                        TicketMove firstMove = (TicketMove) doubleMove.firstMove();
+                        TicketMove secondMove = (TicketMove) doubleMove.secondMove();
+                        currentState.cToP.get(move.colour()).removeTicket(Ticket.DOUBLE);
+                        next = nextState(currentState, firstMove, secondMove);
+                    } else if(move.getClass() == TicketMove.class){
+                        next = nextState(currentState, (TicketMove) move);      
+                    } else {
+                        next = currentState;
+                    }
+                    return next;
+                }
+                
+                private GameState nextState(GameState currentState, TicketMove move){
+                    ScotlandYardPlayer player = currentState.cToP.get(move.colour());
+                    player.removeTicket(move.ticket());
+                    player.location(move.destination());
+                    return currentState;
+                }
+                
+                private GameState nextState(GameState currentState, TicketMove firstMove, TicketMove secondMove){
+                    ScotlandYardPlayer player = currentState.cToP.get(secondMove.colour());
+                    player.removeTicket(firstMove.ticket());
+                    player.removeTicket(secondMove.ticket());
+                    player.location(secondMove.destination());
+                    return currentState;
+                }
+                
+                private int distance(ScotlandYardView view, GameState state, int destination){
+                    ScotlandYardPlayer player = state.cToP.get(view.getCurrentPlayer());
+                    Graph<Integer, Transport> graph = view.getGraph();
+                    Node currentNode = graph.getNode(player.location());
+                    Node destinationNode = graph.getNode(destination);
+                    Collection<Edge<Integer, Transport>> connected = graph.getEdgesFrom(currentNode);
+                    Set<Edge<Integer, Transport>> visited = new HashSet<>();
+                    int distance = 0;
+                    
+                    while(!visited.contains(destinationNode)){
+                        distance += 1;
+                        visited.addAll(connected);
+                        Collection<Edge<Integer, Transport>> newConnected = new HashSet<>();
+                        connected.forEach(e -> newConnected.addAll(graph.getEdgesFrom(e.destination())));
+                        connected = newConnected;
+                    }
+
+                    return distance;
+                }
+                
                 
                 @Override
 		public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
