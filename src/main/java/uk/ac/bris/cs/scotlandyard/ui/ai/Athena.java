@@ -49,25 +49,30 @@ public class Athena implements PlayerFactory {
                         DoubleMove doubleMove = (DoubleMove) move;
                         TicketMove firstMove = (TicketMove) doubleMove.firstMove();
                         TicketMove secondMove = (TicketMove) doubleMove.secondMove();
-                        currentState.cToP.get(move.colour()).removeTicket(Ticket.DOUBLE);
+                        currentState.cToP().get(move.colour()).removeTicket(Ticket.DOUBLE);
                         next = nextState(currentState, firstMove, secondMove);
                     } else if(move.getClass() == TicketMove.class){
                         next = nextState(currentState, (TicketMove) move);      
                     } else {
+                        currentState.setStuck(move.colour());
                         next = currentState;
                     }
                     return next;
                 }
                 
                 private GameState nextState(GameState currentState, TicketMove move){
-                    ScotlandYardPlayer player = currentState.cToP.get(move.colour());
+                    if(move.colour().isMrX())
+                        currentState.nextRound(1);
+                    ScotlandYardPlayer player = currentState.cToP().get(move.colour());
                     player.removeTicket(move.ticket());
                     player.location(move.destination());
                     return currentState;
                 }
                 
                 private GameState nextState(GameState currentState, TicketMove firstMove, TicketMove secondMove){
-                    ScotlandYardPlayer player = currentState.cToP.get(secondMove.colour());
+                    if(secondMove.colour().isMrX())
+                        currentState.nextRound(2);
+                    ScotlandYardPlayer player = currentState.cToP().get(secondMove.colour());
                     player.removeTicket(firstMove.ticket());
                     player.removeTicket(secondMove.ticket());
                     player.location(secondMove.destination());
@@ -75,7 +80,7 @@ public class Athena implements PlayerFactory {
                 }
                 
                 private int distance(ScotlandYardView view, GameState state, int destination){
-                    ScotlandYardPlayer player = state.cToP.get(view.getCurrentPlayer());
+                    ScotlandYardPlayer player = state.cToP().get(view.getCurrentPlayer());
                     Graph<Integer, Transport> graph = view.getGraph();
                     Node currentNode = graph.getNode(player.location());
                     Node destinationNode = graph.getNode(destination);
@@ -106,6 +111,9 @@ public class Athena implements PlayerFactory {
                         }
                         
                         
+                        GameState state = new GameState(view);
+                        if (view.getCurrentRound() > 0)
+                            System.out.println("Distance is: " + distance(view, state, 1));
                         
 			callback.accept(new ArrayList<>(moves).get(random.nextInt(moves.size())));
 
@@ -219,10 +227,23 @@ public class Athena implements PlayerFactory {
                 private class GameState {
                     private List<ScotlandYardPlayer> players = new ArrayList<>();
                     private Map<Colour, ScotlandYardPlayer> cToP;
+                    private int currentRound;
+                    private List<Boolean> rounds;
+                    private Set<Colour> stuckDetectives;
 
                     public GameState(ScotlandYardView view){
                         view.getPlayers().forEach(p -> players.add(makePlayer(view, p)));
                         cToP = coloursToPlayers();
+                        currentRound = view.getCurrentRound();
+                        rounds = view.getRounds();
+                    }
+                    
+                    public void setStuck(Colour detective){
+                        stuckDetectives.add(detective);
+                    }
+                    
+                    public Map<Colour, ScotlandYardPlayer> cToP(){
+                        return cToP;
                     }
 
                     private Map<Ticket, Integer> getTickets(ScotlandYardView view, Colour colour){
@@ -257,6 +278,10 @@ public class Athena implements PlayerFactory {
 
                     public int tickets(Colour colour, Ticket ticket) {
                         return cToP.get(colour).tickets().get(ticket);
+                    }
+                    
+                    public void nextRound(int x){
+                        currentRound =+ x;
                     }
 
                 }
