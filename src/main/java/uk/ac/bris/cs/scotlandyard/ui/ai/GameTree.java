@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Raell
  */
-class GameTree<V, E> {
+public class GameTree<V, E> {
 
     V GameState;
     E value;
@@ -20,7 +20,7 @@ class GameTree<V, E> {
     List<GameTree<V, E>> children;
 
 
-    GameTree(V state, E value, int playerCount, int depth) {
+    public GameTree(V state, E value, int playerCount, int depth) {
         GameState = state;
         this.value = value;
         this.playerCount = playerCount;
@@ -46,6 +46,10 @@ class GameTree<V, E> {
             }
             return height + 1;
         }
+    }
+    
+    public void performMiniMax() {
+        //TODO: Update tree values by minimax algorithm from bottom nodes
     }
 
 }
