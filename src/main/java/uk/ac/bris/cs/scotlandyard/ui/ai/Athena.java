@@ -45,6 +45,7 @@ public class Athena implements PlayerFactory {
       
     private Visualiser visualiser;
     private ResourceProvider provider;
+    public static final int SEARCH_DEPTH = 10;
     
     // TODO create a new player here
     @Override
@@ -63,10 +64,6 @@ public class Athena implements PlayerFactory {
                ResourceProvider provider) {
         this.visualiser = visualiser;
         this.provider = provider;
-        /*Pane pane = visualiser.surface();
-        ImageView map = new ImageView();
-        map.setImage(provider.getTicket(Ticket.SECRET));
-        pane.getChildren().add(map);*/
     }
 
     // TODO A sample player that selects a random move
@@ -74,7 +71,7 @@ public class Athena implements PlayerFactory {
 
             private final Random random = new Random();
             private final Map<Colour,Map<Ticket, Integer>> initTickets = new HashMap<>();
-            private ScotlandYardView view;
+            //private ScotlandYardView view;
             private final Visualiser visualiser;
             private final ResourceProvider provider;
             
@@ -82,79 +79,17 @@ public class Athena implements PlayerFactory {
                 this.visualiser = visualiser;
                 this.provider = provider;
             }
-
-            private GameState nextState(GameState currentState, Move move){
-                GameState next;
-                if(move.getClass() == DoubleMove.class){
-                    DoubleMove doubleMove = (DoubleMove) move;
-                    TicketMove firstMove = (TicketMove) doubleMove.firstMove();
-                    TicketMove secondMove = (TicketMove) doubleMove.secondMove();
-                    currentState.getColourMap().get(move.colour()).removeTicket(Ticket.DOUBLE);
-                    next = nextState(currentState, firstMove, secondMove);
-                } else if(move.getClass() == TicketMove.class){
-                    next = nextState(currentState, (TicketMove) move);      
-                } else {
-                    currentState.setStuck(move.colour());
-                    next = currentState;
-                }
-                return next;
-            }
-
-            private GameState nextState(GameState currentState, TicketMove move){
-                if(move.colour().isMrX())
-                    currentState.nextRound(1);
-                ScotlandYardPlayer player = currentState.getColourMap().get(move.colour());
-                player.removeTicket(move.ticket());
-                player.location(move.destination());
-                return currentState;
-            }
-
-            private GameState nextState(GameState currentState, TicketMove firstMove, TicketMove secondMove){
-                if(secondMove.colour().isMrX())
-                    currentState.nextRound(2);
-                ScotlandYardPlayer player = currentState.getColourMap().get(secondMove.colour());
-                player.removeTicket(firstMove.ticket());
-                player.removeTicket(secondMove.ticket());
-                player.location(secondMove.destination());
-                return currentState;
-            }
-
-            /*private int distance(ScotlandYardView view, GameState state, int destination){
-                ScotlandYardPlayer player = state.cToP.get(view.getCurrentPlayer());
-                Graph<Integer, Transport> graph = view.getGraph();
-                Node currentNode = graph.getNode(player.location());
-                Node destinationNode = graph.getNode(destination);
-                Collection<Edge<Integer, Transport>> connected = graph.getEdgesFrom(currentNode);
-                Set<Edge<Integer, Transport>> visited = new HashSet<>();
-                int distance = 0;
-
-                while(!visited.contains(destinationNode)){
-                    distance += 1;
-                    visited.addAll(connected);
-                    Collection<Edge<Integer, Transport>> newConnected = new HashSet<>();
-                    connected.forEach(e -> newConnected.addAll(graph.getEdgesFrom(e.destination())));
-                    connected = newConnected;
-                }
-
-                return distance;
-            }*/
-
-
+            
             @Override
             public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
                             Consumer<Move> callback) {
                     // TODO do something interesting here; find the best move
                     // picks a random move
-                    /*if(view.getCurrentRound() == 0) {
-                        GameState initState = new GameState(view);
-                        view.getPlayers().forEach(p -> initTickets.put(p, initState.getTickets(view, p)));
-                        this.view = view;
-                    }*/
-
-
-                    //GameState state = new GameState(view);
-                    //if (view.getCurrentRound() > 0)
-                        //System.out.println("Distance is: " + distance(view, state, 1));
+                    GameState state = new GameState(view);
+                    if(view.getCurrentRound() == 0) {
+                        view.getPlayers().forEach(p -> initTickets.put(p, state.getPlayerTickets(p)));
+                    }
+                    
                     int ran = random.nextInt(moves.size());
                     Move move = new ArrayList<>(moves).get(ran);
                     displayMrXMove(move, location);

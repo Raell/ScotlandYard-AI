@@ -6,14 +6,18 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
+import uk.ac.bris.cs.scotlandyard.model.DoubleMove;
+import uk.ac.bris.cs.scotlandyard.model.Move;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardView;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
+import uk.ac.bris.cs.scotlandyard.model.TicketMove;
 
 /**
  *
@@ -25,28 +29,43 @@ class GameState {
     private int currentRound;
     private final List<Boolean> rounds;
     private Set<Colour> stuckDetectives;
+    private ScotlandYardPlayer currentPlayer;
 
     GameState(ScotlandYardView view){
         players = new ArrayList<>();
         view.getPlayers().forEach(p -> players.add(makePlayer(view, p)));
-        cToP = coloursToPlayers();
+        cToP = setColoursToPlayersMap();
         currentRound = view.getCurrentRound();
         rounds = view.getRounds();
+        currentPlayer = cToP.get(view.getCurrentPlayer());
+    }
+    
+    private GameState(GameState g) {
+        this.players = g.players;
+        this.cToP = g.cToP;
+        this.currentRound = g.currentRound;
+        this.rounds = g.rounds;
+        this.stuckDetectives = g.stuckDetectives;
+        this.currentPlayer = g.currentPlayer;
     }
 
     int getCurrentRound() {
         return currentRound;
     }
 
-    void setStuck(Colour detective){
+    private void setStuck(Colour detective){
         stuckDetectives.add(detective);
     }
 
     Map<Colour, ScotlandYardPlayer> getColourMap() {
-        return cToP;
+        return Collections.unmodifiableMap(cToP);
+    }
+    
+    Map<Ticket, Integer> getPlayerTickets(Colour colour) {
+        return Collections.unmodifiableMap(cToP.get(colour).tickets());
     }
 
-    Map<Ticket, Integer> getTickets(ScotlandYardView view, Colour colour){
+    private Map<Ticket, Integer> getPlayerTicketsFromView(ScotlandYardView view, Colour colour){
         Map<Ticket, Integer> m = new HashMap<>();
         m.put(Ticket.BUS, view.getPlayerTickets(colour, Ticket.BUS).get());
         m.put(Ticket.DOUBLE, view.getPlayerTickets(colour, Ticket.DOUBLE).get());
@@ -57,14 +76,16 @@ class GameState {
     }
 
     private ScotlandYardPlayer makePlayer(ScotlandYardView view, Colour colour){
-        ScotlandYardPlayer player  = new ScotlandYardPlayer(null, colour, 
+        ScotlandYardPlayer player = new ScotlandYardPlayer(
+                null, colour, 
                 view.getPlayerLocation(colour).get(),
-                getTickets(view, colour));
+                getPlayerTicketsFromView(view, colour)
+        );
         return player;
     }
 
     //maps the colours to the corresponding player
-    private Map<Colour, ScotlandYardPlayer> coloursToPlayers(){
+    private Map<Colour, ScotlandYardPlayer> setColoursToPlayersMap(){
         Map<Colour, ScotlandYardPlayer> m = new HashMap<>();
         players.forEach((p) -> {
             m.put(p.colour(), p);
@@ -83,5 +104,49 @@ class GameState {
     void nextRound(int x){
         currentRound =+ x;
     }
+    
+    private void nextPlayer(Colour prevPlayer) {      
+        int index = players.indexOf(prevPlayer);
+        if(index + 1 < players.size())
+            currentPlayer =  players.get(index + 1);
+        else
+            currentPlayer = players.get(0);
+    }
+    
+    GameState nextState(GameState currentState, Move move){
+        if(move.getClass() == DoubleMove.class)
+            return nextState(this, (DoubleMove) move);
+        else if(move.getClass() == TicketMove.class)
+            return nextState(this, (TicketMove) move);
+        else {
+            GameState nextState = new GameState(currentState);
+            nextState.setStuck(move.colour());
+            nextState.nextPlayer(move.colour());
+            return nextState;
+        }     
+    }
+
+    private GameState nextState(GameState currentState, TicketMove move){
+        GameState nextState = new GameState(currentState);
+        if(move.colour().isMrX())
+            nextState.nextRound(1);
+        ScotlandYardPlayer player = nextState.getColourMap().get(move.colour());
+        player.removeTicket(move.ticket());
+        player.location(move.destination());
+        nextState.nextPlayer(move.colour());
+        return nextState;
+    }
+
+    private GameState nextState(GameState currentState, DoubleMove move){
+        GameState nextState = new GameState(currentState);
+        currentState.nextRound(2);
+        ScotlandYardPlayer player = nextState.getColourMap().get(move.colour());
+        player.removeTicket(move.firstMove().ticket());
+        player.removeTicket(move.secondMove().ticket());
+        player.location(move.finalDestination());
+        nextState.nextPlayer(move.colour());
+        return nextState;
+    }
+            
 
 }
