@@ -24,12 +24,12 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author Raell
  */
-class ValidMoves{ 
+public class ValidMoves{ 
     private static Graph<Integer, Transport> graph;
     private static List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
-    static void initialize(Graph<Integer, Transport> g, List<ScotlandYardPlayer> d, List<Boolean> r) {
+    public static void initialize(Graph<Integer, Transport> g, List<ScotlandYardPlayer> d, List<Boolean> r) {
         graph = g;
         detectives = d;
         rounds = r;
@@ -118,7 +118,7 @@ class ValidMoves{
     }
 
     //returns the valid mvoes for the given player
-    static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound) {
+    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound) {
         Set<Move> moves = new HashSet<>();
 
         if(player.isMrX())

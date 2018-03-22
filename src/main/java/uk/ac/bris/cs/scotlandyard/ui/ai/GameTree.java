@@ -5,32 +5,42 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  *
  * @author Raell
  */
-public class GameTree<V, E> {
+public class GameTree {
 
-    V GameState;
-    E value;
-    int playerCount;
-    int depth;
-    List<GameTree<V, E>> children;
+    private final GameState GameState;
+    private int value;
+    private final int playerCount;
+    private final int depth;
+    private List<GameTree> children;
 
 
-    public GameTree(V state, E value, int playerCount, int depth) {
+    public GameTree(GameState state, int value, int playerCount, int depth) {
         GameState = state;
         this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
     }
-
-    public Boolean add(V state, E value) {
-        return children.add(new GameTree<>(state, value, playerCount, depth));
+    
+    public List<GameTree> getChildren() {
+        return Collections.unmodifiableList(children);
     }
-
+    
+    public Boolean add(GameState state, int value) {
+        return children.add(new GameTree(state, value, playerCount, depth));
+    }
+    
+    public GameState getState() {
+        return GameState;
+    }
+    
     public Boolean isMaximiser() {
         int height = getHeight();
         return (height % playerCount == depth % playerCount);
@@ -41,15 +51,42 @@ public class GameTree<V, E> {
             return 0;
         else {
             int height = 0;
-            for(GameTree<V, E> c : children) {
+            for(GameTree c : children) {
                 height = Math.max(height, c.getHeight());
             }
             return height + 1;
         }
     }
     
-    public void performMiniMax() {
+    public List<GameTree> getBottomNodes() {
+        List<GameTree> list = new ArrayList<>();
+        
+        if(getHeight() == 0)
+            list.add(this);                
+        else {
+            children.forEach((c) -> {
+                list.addAll(c.getBottomNodes());
+            });
+        }
+        return list;
+    }
+    
+    /*public void performMiniMax() {
         //TODO: Update tree values by minimax algorithm from bottom nodes
+        scoreLeafValue();
+    }
+    
+    private void scoreLeafValue() {
+        //TODO: Updates value of leaf nodes
+    }*/
+    
+    public void setValue(int value) {
+        this.value = value;
+    }
+    
+    //Visitor to score bottom nodes and uses minimax to generate path
+    public void accept(Visitor v) {
+        v.visit(this);
     }
 
 }
