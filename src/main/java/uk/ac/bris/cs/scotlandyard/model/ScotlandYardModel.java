@@ -80,7 +80,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
          
             //check whether the detectives can move
-            boolean detectivesCanMove = detectives.stream().anyMatch(p -> validMoves(p, p.location()).iterator().next().getClass() != PassMove.class);
+            boolean detectivesCanMove = detectives.stream()
+                    .anyMatch(p -> validMoves(p, p.location()).iterator().next()
+                            .getClass() != PassMove.class);
             gameOver = !detectivesCanMove;                      
             
             //initialise mrX and check if the players are valid
@@ -499,22 +501,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         } 
     }
     
-    //return the destination of a move
-    private int moveDestination(ScotlandYardPlayer player, Move move) {
-        if(move.getClass() == TicketMove.class)
-            return moveDestination((TicketMove) move);
-        else if(move.getClass() == DoubleMove.class)
-            return moveDestination((DoubleMove) move);
-        else
-            return player.location();
-    }
-    
-    private int moveDestination(TicketMove move) {
-        return move.destination();
-    }
-    
-    private int moveDestination(DoubleMove move) {
-        return move.finalDestination();
+    private int moveDestination(ScotlandYardPlayer player, Move move){
+        DestinationVis v = new DestinationVis();
+        move.visit(v);
+        if(v.destination == -1) return player.location();
+        else return v.destination;
     }
     
     //checks whether a move is valid
