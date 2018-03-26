@@ -501,6 +501,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         } 
     }
     
+    //uses a visitor to get the move destination, returning the player's current
+    //location if it's a pass move
     private int moveDestination(ScotlandYardPlayer player, Move move){
         DestinationVis v = new DestinationVis();
         move.visit(v);
