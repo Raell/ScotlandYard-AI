@@ -129,16 +129,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
    
     //checks whether a player has enough tickets to make the move
-    private boolean hasValidTicket(ScotlandYardPlayer player, TicketMove move) {      
-        return player.hasTickets(move.ticket());
-    }
-    
-    //checks whether a player has enough tickets to make the move
-    private boolean hasValidTicket(ScotlandYardPlayer player, DoubleMove move) {
-        if(move.hasSameTicket())
-            return player.hasTickets(move.firstMove().ticket(), 2);
-        else
-            return (player.hasTickets(move.firstMove().ticket()) && player.hasTickets(move.secondMove().ticket()));
+    private boolean hasValidTicket(ScotlandYardPlayer player, Move move) {   
+        HasValidVis v = new HasValidVis(player);
+        move.visit(v);
+        return v.hasTicket;
     }
     
     //returns all the ticket moves a player can make, possibly with secret tickets 

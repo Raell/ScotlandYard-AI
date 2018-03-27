@@ -58,8 +58,6 @@ public class HiddenMoveVis implements MoveVisitor{
         //if the second round is a reveal round, reveal that destination, too
         if(rounds.get(currentRound + 1))
             secondDes = move.secondMove().destination();
-        
-        //move = new DoubleMove(move.colour(), move.firstMove().ticket(), firstDes, move.secondMove().ticket(), secondDes);
     }
     
 }
