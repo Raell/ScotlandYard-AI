@@ -98,12 +98,16 @@ public class ScoreVisitor implements Visitor{
     
     private double contextualFactor(GameState g) {
         int lastKnownPos = g.getLastKnownPos();
-        Node<Integer> start = graph.getNode(lastKnownPos);
-        List<Ticket> ticketsUsed = g.getTicketsSinceLastKnown();
-        Set<Integer> possiblePos = new HashSet<>();
-        updatePositions(possiblePos, ticketsUsed, start);
-        
-        return (possiblePos.size() <= 2) ? (possiblePos.size() == 1) ? 0.2 : 0.5 : 1;
+        if(lastKnownPos != 0) {
+            Node<Integer> start = graph.getNode(lastKnownPos);
+            List<Ticket> ticketsUsed = g.getTicketsSinceLastKnown();
+            Set<Integer> possiblePos = new HashSet<>();
+            updatePositions(possiblePos, ticketsUsed, start);
+
+            return (possiblePos.size() <= 2) ? (possiblePos.size() == 1) ? 0.2 : 0.5 : 1;
+        }
+        else
+            return 1;
     }
     
     private double specialTicketsFactor(GameState g) {

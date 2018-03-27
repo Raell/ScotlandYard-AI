@@ -45,8 +45,8 @@ public class Athena implements PlayerFactory {
       
     private Visualiser visualiser;
     private ResourceProvider provider;
-    //The number of nodes from the root to the bottom (excluding root)
-    public static final int SEARCH_DEPTH = 2;
+    //The number of connections from the root to the bottom of tree (root = 0)
+    public static final int SEARCH_DEPTH = 3;
     
     // TODO create a new player here
     @Override
@@ -115,16 +115,16 @@ public class Athena implements PlayerFactory {
             
             private void generateNextStates(GameTree parent, int depth) {
                 
-                if(depth >= 0) {
+                if(depth > 0) {
                     
                     GameState state = parent.getState();
-                    ScotlandYardPlayer player = state.getCurrentPlayer();
-                    //System.out.println("Depth: " + (SEARCH_DEPTH - depth) + " " + player.colour());
+                    ScotlandYardPlayer player = state.getCurrentPlayer();                   
                     Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound());
                     
                     for(Move move : validmoves) {
                         GameState nextState = state.nextState(move);
-                        GameTree child = parent.add(nextState);                      
+                        GameTree child = parent.add(nextState);  
+                        //System.out.println("Depth: " + (SEARCH_DEPTH - depth + 1) + " " + player.colour());
                         generateNextStates(child, depth - 1);
                     }
                 }               
