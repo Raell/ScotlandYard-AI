@@ -366,42 +366,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         mrX.player().makeMove(this, mrX.location(), validMoves(mrX, mrX.location()), this);            
     }
     
-    //gets the hidden move
+    //gets the hidden move using a visitor
     private Move hiddenMove(Move move) {
-            if(move.getClass() == DoubleMove.class)
-                return hiddenMove((DoubleMove) move);
+            HiddenMoveVis v = new HiddenMoveVis(lastRevealed, rounds, currentRound);
+            move.visit(v);
+            if(v.isDouble)
+                return new DoubleMove(v.firstMove.colour(), v.firstMove.ticket(), v.firstDes, v.secondMove.ticket(), v.secondDes);
             else
-                return hiddenMove((TicketMove) move);
+                return new TicketMove(v.firstMove.colour(), v.firstMove.ticket(), v.destination);
     }
-    
-    private Move hiddenMove(DoubleMove move) {
-        int firstDes = lastRevealed;
-        int secondDes = lastRevealed;
         
-        //if the first round is a reveal round, reveal that destination and
-        //update the second one
-        if(rounds.get(currentRound)) {
-            firstDes = move.firstMove().destination();
-            if(!rounds.get(currentRound + 1))
-                secondDes = firstDes;
-        }
-        
-        //if the second round is a reveal round, reveal that destination, too
-        if(rounds.get(currentRound + 1))
-            secondDes = move.secondMove().destination();
-        
-        return new DoubleMove(move.colour(), move.firstMove().ticket(), firstDes, move.secondMove().ticket(), secondDes);
-    }
-    
-    private Move hiddenMove(TicketMove move) {
-        int des = lastRevealed;
-        
-        if(currentRound > 0 && rounds.get(currentRound - 1))
-            des = move.destination();
-        
-        return new TicketMove(move.colour(), move.ticket(), des);
-    }
-    
     //deals with mrX making a move
     private void acceptMrXCallback(Move move) {      
         //if it's a ticket move, increment the round and update mrX's variables
