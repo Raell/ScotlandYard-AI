@@ -16,25 +16,29 @@ import java.util.List;
 public class GameTree {
 
     private final GameState GameState;
-    private int value;
+    private double value;
     private final int playerCount;
     private final int depth;
     private List<GameTree> children;
 
 
-    public GameTree(GameState state, int value, int playerCount, int depth) {
+    public GameTree(GameState state, double value, int playerCount, int depth) {
         GameState = state;
         this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
+        this.children = new ArrayList<>();
     }
     
     public List<GameTree> getChildren() {
         return Collections.unmodifiableList(children);
     }
     
-    public Boolean add(GameState state, int value) {
-        return children.add(new GameTree(state, value, playerCount, depth));
+    public GameTree add(GameState state) {
+        Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+        GameTree child = new GameTree(state, initialValue, playerCount, depth);
+        children.add(child);
+        return child;
     }
     
     public GameState getState() {
@@ -46,7 +50,7 @@ public class GameTree {
         return (height % playerCount == depth % playerCount);
     }
 
-    private int getHeight() {
+    public int getHeight() {
         if(children.isEmpty())
             return 0;
         else {
@@ -80,7 +84,7 @@ public class GameTree {
         //TODO: Updates value of leaf nodes
     }*/
     
-    public void setValue(int value) {
+    public void setValue(double value) {
         this.value = value;
     }
     

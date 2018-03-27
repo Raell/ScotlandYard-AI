@@ -45,7 +45,8 @@ public class Athena implements PlayerFactory {
       
     private Visualiser visualiser;
     private ResourceProvider provider;
-    public static final int SEARCH_DEPTH = 10;
+    //The number of nodes from the root to the bottom (excluding root)
+    public static final int SEARCH_DEPTH = 2;
     
     // TODO create a new player here
     @Override
@@ -74,6 +75,7 @@ public class Athena implements PlayerFactory {
             //private ScotlandYardView view;
             private final Visualiser visualiser;
             private final ResourceProvider provider;
+            private GameTree root;
             
             MyPlayer(Visualiser visualiser, ResourceProvider provider) {
                 this.visualiser = visualiser;
@@ -85,10 +87,13 @@ public class Athena implements PlayerFactory {
                             Consumer<Move> callback) {
                     // TODO do something interesting here; find the best move
                     // picks a random move
-                    GameState state = new GameState(view);
+                            
                     if(view.getCurrentRound() == 0) {
-                        view.getPlayers().forEach(p -> initTickets.put(p, state.getPlayerTickets(p)));
+                        initialMove(view, location);
                     }
+                    
+                    ScoreVisitor v = new ScoreVisitor(view.getGraph(), initTickets.get(Colour.BLACK));
+                    root.accept(v);
                     
                     int ran = random.nextInt(moves.size());
                     Move move = new ArrayList<>(moves).get(ran);
@@ -96,6 +101,33 @@ public class Athena implements PlayerFactory {
                                                          
                     callback.accept(move);
 
+            }
+            
+            private void initialMove(ScotlandYardView view, int location) {
+                GameState state = new GameState(view, location); 
+                GameState.setRounds(view.getRounds());
+                state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
+                root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH);
+                
+                ValidMoves.initialize(view.getGraph(), state.getPlayers(), view.getRounds());
+                generateNextStates(root, SEARCH_DEPTH);
+            }
+            
+            private void generateNextStates(GameTree parent, int depth) {
+                
+                if(depth >= 0) {
+                    
+                    GameState state = parent.getState();
+                    ScotlandYardPlayer player = state.getCurrentPlayer();
+                    //System.out.println("Depth: " + (SEARCH_DEPTH - depth) + " " + player.colour());
+                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound());
+                    
+                    for(Move move : validmoves) {
+                        GameState nextState = state.nextState(move);
+                        GameTree child = parent.add(nextState);                      
+                        generateNextStates(child, depth - 1);
+                    }
+                }               
             }
             
             private void displayMrXMove(Move move, int location) {
@@ -114,6 +146,10 @@ public class Athena implements PlayerFactory {
                 Platform.runLater(() -> {
                     Point2D start = provider.coordinateAtNode(location);
                     pane.getChildren().clear();
+                    Circle s = new Circle(start.getX(), start.getY(), 30, Color.TRANSPARENT);
+                    s.setStroke(Color.CYAN);
+                    s.setStrokeWidth(10);
+                    pane.getChildren().add(s);
                     for(Point2D d : dest) {
                         Line l = new Line(start.getX(), start.getY(), d.getX(), d.getY());
                         l.setStroke(Color.VIOLET);
