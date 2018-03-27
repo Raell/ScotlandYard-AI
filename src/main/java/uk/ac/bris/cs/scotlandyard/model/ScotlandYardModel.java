@@ -489,26 +489,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         else return v.destination;
     }
     
-    //checks whether a move is valid
+    //checks whether a move is valid with a visitor
     private boolean isValidMove(ScotlandYardPlayer player, Move move) {
-        if(move.getClass() == TicketMove.class)
-            return isValidMove(player, (TicketMove) move);
-        else if(move.getClass() == DoubleMove.class)
-            return isValidMove(player, (DoubleMove) move);
-        else
-            return isValidMove(player, (PassMove) move);
+        IsValidVis v = new IsValidVis(validMoves(player, player.location()));
+        move.visit(v);
+        return v.isValid;
     }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, PassMove move) {
-        return (validMoves(player, player.location()).contains(move));
-    }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, TicketMove move) {
-        return (validMoves(player, player.location()).contains(move));
-    }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, DoubleMove move) {      
-        return (validMoves(player, player.location()).contains(move));
-    }
-
 }
