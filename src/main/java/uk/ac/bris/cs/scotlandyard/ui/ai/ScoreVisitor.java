@@ -91,7 +91,7 @@ public class ScoreVisitor implements Visitor{
     }
     
     private double availableMovesFactor(GameState g) {
-        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound());
+        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers());
         int moveCount = validmoves.size();       
         return (moveCount <= 10) ? (moveCount == 0) ? 0.0 : 0.8 : 1.0;
     }

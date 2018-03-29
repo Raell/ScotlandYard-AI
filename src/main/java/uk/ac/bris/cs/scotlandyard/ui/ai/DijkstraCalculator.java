@@ -42,7 +42,7 @@ public class DijkstraCalculator extends GraphCalculator {
 
         // initialise current as end node and initialise graph that will hold the route to return
         Node<Integer> current = anyNodeToStart.getNode(destinationNodeID);  
-        DirectedGraph<Integer, Double> route = new DirectedGraph<Integer, Double>();
+        DirectedGraph<Integer, Double> route = new DirectedGraph<>();
         route.addNode(current);
 
         // trace route from end node to start node

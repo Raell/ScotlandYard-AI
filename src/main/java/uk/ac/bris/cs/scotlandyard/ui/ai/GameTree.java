@@ -19,7 +19,7 @@ public class GameTree {
     private double value;
     private final int playerCount;
     private final int depth;
-    private List<GameTree> children;
+    private final List<GameTree> children;
 
 
     public GameTree(GameState state, double value, int playerCount, int depth) {
@@ -86,6 +86,10 @@ public class GameTree {
     
     public void setValue(double value) {
         this.value = value;
+    }
+    
+    public double getValue() {
+        return value;
     }
     
     //Visitor to score bottom nodes and uses minimax to generate path

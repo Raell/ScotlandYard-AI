@@ -119,7 +119,7 @@ public class Athena implements PlayerFactory {
                     
                     GameState state = parent.getState();
                     ScotlandYardPlayer player = state.getCurrentPlayer();                   
-                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound());
+                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getPlayers());
                     
                     for(Move move : validmoves) {
                         GameState nextState = state.nextState(move);
