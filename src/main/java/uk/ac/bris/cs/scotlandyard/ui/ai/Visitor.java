@@ -11,4 +11,5 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
  */
 public interface Visitor {
     void visit(GameTree tree);
+    //void visit(NodeTree tree);
 }

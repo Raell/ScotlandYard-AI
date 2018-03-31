@@ -107,28 +107,50 @@ public class Athena implements PlayerFactory {
                 GameState state = new GameState(view, location); 
                 GameState.setRounds(view.getRounds());
                 state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
-                root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH);
+                root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH, null);
                 
                 ValidMoves.initialize(view.getGraph(), state.getPlayers(), view.getRounds());
-                generateNextStates(root, SEARCH_DEPTH);
+                generateNextStates(root, state, SEARCH_DEPTH);
             }
             
-            private void generateNextStates(GameTree parent, int depth) {
+            private void generateNextStates(NodeTree parent, GameState state, int depth) {
+                if(depth <= 0)
+                    return;
                 
-                if(depth > 0) {
+                ScotlandYardPlayer player = state.getCurrentPlayer(); 
+                Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getPlayers());
+                
+                for(Move move : validmoves) {
+                    GameState nextState = state.nextState(move);
                     
-                    GameState state = parent.getState();
-                    ScotlandYardPlayer player = state.getCurrentPlayer();                   
-                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getPlayers());
-                    
-                    for(Move move : validmoves) {
-                        GameState nextState = state.nextState(move);
-                        GameTree child = parent.add(nextState);  
-                        //System.out.println("Depth: " + (SEARCH_DEPTH - depth + 1) + " " + player.colour());
-                        generateNextStates(child, depth - 1);
+                    if(depth == 1) {
+                        GameTree bottom = new GameTree(nextState, 0, state.getPlayers().size(), SEARCH_DEPTH, move);
+                        parent.add(bottom);
                     }
-                }               
+                    else {
+                        NodeTree child = parent.add(move);
+                        generateNextStates(child, nextState, depth - 1);
+                    }
+                }
+                
             }
+            
+//            private void generateNextStates(GameTree parent, int depth) {
+//                
+//                if(depth > 0) {
+//                    
+//                    GameState state = parent.getState();
+//                    ScotlandYardPlayer player = state.getCurrentPlayer();                   
+//                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getPlayers());
+//                    
+//                    for(Move move : validmoves) {
+//                        GameState nextState = state.nextState(move);
+//                        NodeTree child = parent.add(move);  
+//                        //System.out.println("Depth: " + (SEARCH_DEPTH - depth + 1) + " " + player.colour());
+//                        generateNextStates(child, depth - 1);
+//                    }
+//                }               
+//            }
             
             private void displayMrXMove(Move move, int location) {
                 List<Point2D> dest = new ArrayList<>();

@@ -150,7 +150,7 @@ public class ScoreVisitor implements Visitor{
         return value * Math.pow(path.getEdges().size(), 2);
     }
     
-    private void minimaxUpdate(GameTree tree) {
+    private void minimaxUpdate(NodeTree tree) {
         
     }
     

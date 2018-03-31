@@ -14,40 +14,37 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
  *
  * @author Raell
  */
-public class GameTree extends NodeTree {
-
-    private final GameState GameState;
-    /*private double value;
+public class NodeTree {
+    private double value;
+    private final Move move;
     private final int playerCount;
     private final int depth;
-    private final List<GameTree> children;*/
-
-
-    public GameTree(GameState state, double value, int playerCount, int depth, Move move) {
-        super(value, playerCount, depth, move);
-        GameState = state;       
-        /*this.value = value;
+    private final List<NodeTree> children;
+    
+    public NodeTree(double value, int playerCount, int depth, Move move) {
+        this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
-        this.children = new ArrayList<>();*/
+        this.children = new ArrayList<>();
+        this.move = move;
     }
     
-    /*public List<GameTree> getChildren() {
+    public List<NodeTree> getChildren() {
         return Collections.unmodifiableList(children);
     }
     
-    public GameTree add(GameState state) {
+    public NodeTree add(Move move) {
         Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        GameTree child = new GameTree(state, initialValue, playerCount, depth);
+        NodeTree child = new NodeTree(initialValue, playerCount, depth, move);
         children.add(child);
         return child;
-    }*/
-    
-    public GameState getState() {
-        return GameState;
     }
     
-    /*public Boolean isMaximiser() {
+    public void add(NodeTree t) {
+        children.add(t);
+    }
+     
+    public Boolean isMaximiser() {
         int height = getHeight();
         return (height % playerCount == depth % playerCount);
     }
@@ -57,40 +54,41 @@ public class GameTree extends NodeTree {
             return 0;
         else {
             int height = 0;
-            for(GameTree c : children) {
+            for(NodeTree c : children) {
                 height = Math.max(height, c.getHeight());
             }
             return height + 1;
         }
-    }*/
-    
-    public List<GameTree> getBottomNodes() {
-        return reachBottom(this);
     }
     
-    private List<GameTree> reachBottom(NodeTree t) {
-        List<GameTree> list = new ArrayList<>();
-        if(t.getChildren().isEmpty() && t.getClass() == GameTree.class)
-            list.add((GameTree) t);
+    public Move getMove() {
+        return move;
+    }
+    
+    /*public List<NodeTree> getBottomNodes() {
+        List<NodeTree> list = new ArrayList<>();
+        
+        if(getHeight() == 0)
+            list.add((GameTree) this);                
         else {
-            t.getChildren().forEach((c) -> {
-                list.addAll(reachBottom(c));
+            children.forEach((c) -> {
+                list.addAll(c.getBottomNodes());
             });
         }
-        return list;           
-    }
+        return list;
+    }*/
     
-    /*public void setValue(double value) {
+    public void setValue(double value) {
         this.value = value;
     }
     
     public double getValue() {
         return value;
-    }*/
+    }
     
     //Visitor to score bottom nodes and uses minimax to generate path
-    public void accept(Visitor v) {
+    /*public void accept(Visitor v) {
         v.visit(this);
-    }
-
+    }*/
+    
 }
