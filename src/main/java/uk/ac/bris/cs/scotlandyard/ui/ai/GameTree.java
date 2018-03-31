@@ -64,8 +64,12 @@ public class GameTree extends NodeTree {
             n.add(c);
         });
         
-        this.getParent().add(n);
-        this.getParent().remove(this);
+        NodeTree p = this.getParent();
+        
+        if(p != null) {
+            p.add(n);
+            p.remove(this);
+        }
         
     }
     

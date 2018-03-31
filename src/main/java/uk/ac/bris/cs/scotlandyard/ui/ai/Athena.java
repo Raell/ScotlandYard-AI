@@ -45,7 +45,7 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 6;
+    private static final int SEARCH_DEPTH = 3;
     private static final double DANGER_SCORE = 30.0;
     
     // TODO create a new player here
@@ -114,9 +114,12 @@ public class Athena implements PlayerFactory {
                     int depth = SEARCH_DEPTH - root.getHeight();
                     for(GameTree b : root.getBottomNodes()) {
                         generateNextStates(b, b.getState(), depth);
-                        b.toNodeTree();
+                        //System.out.println(b.getParent());
+                        //b.toNodeTree();
                     }
                 }
+                
+                //System.out.println(root.getBottomNodes().get(0).getParent());
 
                 ScoreVisitor.minimaxUpdate(root);
                 
