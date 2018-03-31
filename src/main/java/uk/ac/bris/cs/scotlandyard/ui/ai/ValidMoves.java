@@ -29,7 +29,7 @@ public class ValidMoves{
     //private List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
-    public static void initialize(Graph<Integer, Transport> g, List<ScotlandYardPlayer> d, List<Boolean> r) {
+    public static void initialize(Graph<Integer, Transport> g, List<Boolean> r) {
         graph = g;
         rounds = r;
     }
@@ -96,32 +96,35 @@ public class ValidMoves{
 
     //returns the set of possible moves mrX can make
     private static Set<Move> mrXMoves(ScotlandYardPlayer player, int location, 
-            int currentRound, List<ScotlandYardPlayer> detectives) {
+            int currentRound, List<ScotlandYardPlayer> detectives,
+            boolean restrictSpecial) {
         Set<Move> moves = new HashSet<>();
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
-        tMoves.addAll(possibleStandardMoves(player, location, false, detectives));
+        moves.addAll(possibleStandardMoves(player, location, false, detectives));
+        
+        if(!restrictSpecial) {
+            if(player.hasTickets(Ticket.SECRET)){              
+                tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
+            }
 
-        if(player.hasTickets(Ticket.SECRET)){              
-            tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
+            moves.addAll(tMoves);
+
+            //adds the double moves mrX can make
+            Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound, detectives);
+            moves.addAll(doublemoves);
         }
-
-        moves.addAll(tMoves);
-
-        //adds the double moves mrX can make
-        Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound, detectives);
-        moves.addAll(doublemoves);
-
+        
         return moves;
     }
 
     //returns the valid mvoes for the given player
-    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives) {
+    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean restrictSpecial) {
         Set<Move> moves = new HashSet<>();
 
         if(player.isMrX())
-            moves.addAll(mrXMoves(player, location, currentRound, detectives));
+            moves.addAll(mrXMoves(player, location, currentRound, detectives, restrictSpecial));
         else {
             moves.addAll(possibleStandardMoves(player, location, false, detectives));
             //if the detective can't make a ticket move, they make a pass move

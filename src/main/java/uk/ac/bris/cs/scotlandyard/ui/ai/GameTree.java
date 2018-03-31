@@ -24,45 +24,22 @@ public class GameTree extends NodeTree {
 
 
     public GameTree(GameState state, double value, int playerCount, int depth, Move move) {
-        super(value, playerCount, depth, move);
+        super(value, playerCount, depth, move, null);
         GameState = state;       
-        /*this.value = value;
-        this.playerCount = playerCount;
-        this.depth = depth;
-        this.children = new ArrayList<>();*/
     }
     
-    /*public List<GameTree> getChildren() {
-        return Collections.unmodifiableList(children);
-    }
     
-    public GameTree add(GameState state) {
-        Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        GameTree child = new GameTree(state, initialValue, playerCount, depth);
-        children.add(child);
-        return child;
-    }*/
+    public static GameTree swapRoot(NodeTree newRoot, GameState newState) {
+        GameTree root = new GameTree(newState, newRoot.getValue(), newRoot.playerCount, newRoot.depth, null);
+        newRoot.getChildren().forEach(c -> {
+            root.add(c);
+        });
+        return root;
+    }
     
     public GameState getState() {
         return GameState;
     }
-    
-    /*public Boolean isMaximiser() {
-        int height = getHeight();
-        return (height % playerCount == depth % playerCount);
-    }
-
-    public int getHeight() {
-        if(children.isEmpty())
-            return 0;
-        else {
-            int height = 0;
-            for(GameTree c : children) {
-                height = Math.max(height, c.getHeight());
-            }
-            return height + 1;
-        }
-    }*/
     
     public List<GameTree> getBottomNodes() {
         return reachBottom(this);
@@ -80,17 +57,8 @@ public class GameTree extends NodeTree {
         return list;           
     }
     
-    /*public void setValue(double value) {
-        this.value = value;
-    }
-    
-    public double getValue() {
-        return value;
-    }*/
-    
-    //Visitor to score bottom nodes and uses minimax to generate path
-    public void accept(Visitor v) {
-        v.visit(this);
+    public String toString() {
+        return GameState.getCurrentPlayer().colour() + ": " + GameState.getCurrentPlayer().location();
     }
 
 }

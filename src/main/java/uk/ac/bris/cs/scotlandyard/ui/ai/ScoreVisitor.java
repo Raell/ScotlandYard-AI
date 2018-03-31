@@ -29,30 +29,30 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author admin
  */
-public class ScoreVisitor implements Visitor{
+public class ScoreVisitor {
     private Move selectedMove;
-    private final Graph<Integer, Transport> graph;
-    private final Map<Ticket, Integer> initMrXTickets;
+    private static Graph<Integer, Transport> graph;
+    private static Map<Ticket, Integer> initMrXTickets;
     
-    public ScoreVisitor(Graph<Integer, Transport> graph, Map<Ticket, Integer> initMrXTickets) {
-        this.graph = graph;
-        this.initMrXTickets = initMrXTickets;
+    public static void initialize(Graph<Integer, Transport> graph, Map<Ticket, Integer> initMrXTickets) {
+        ScoreVisitor.graph = graph;
+        ScoreVisitor.initMrXTickets = initMrXTickets;
     }
     
-    @Override
+    /*@Override
     public void visit(GameTree tree) {        
         //Visit bottomn nodes and use score function on the game state
-        /*List<Ticket> t = new ArrayList<>(Arrays.asList(Ticket.TAXI, Ticket.BUS));
-        Set<Integer> r = testContextualFactor(128, t);
-        System.out.println(r);*/
+        //List<Ticket> t = new ArrayList<>(Arrays.asList(Ticket.TAXI, Ticket.BUS));
+        //Set<Integer> r = testContextualFactor(128, t);
+        //System.out.println(r);
         
         tree.getBottomNodes().forEach(t -> {
             t.setValue(scoreState(t.getState()));
         });
         minimaxUpdate(tree);
-    }
+    }*/
     
-    private double scoreState(GameState g) {
+    public static double scoreState(GameState g) {
         //TODO Run Dijkstra algorithm on each detecetive to get distance
         //DijkstraCalculator d = new DijkstraCalculator(graph);
         List<Double> distanceScore = new ArrayList<>();
@@ -90,13 +90,13 @@ public class ScoreVisitor implements Visitor{
         }
     }
     
-    private double availableMovesFactor(GameState g) {
-        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers());
+    private static double availableMovesFactor(GameState g) {
+        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false);
         int moveCount = validmoves.size();       
         return (moveCount <= 10) ? (moveCount == 0) ? 0.0 : 0.8 : 1.0;
     }
     
-    private double contextualFactor(GameState g) {
+    private static double contextualFactor(GameState g) {
         int lastKnownPos = g.getLastKnownPos();
         if(lastKnownPos != 0) {
             Node<Integer> start = graph.getNode(lastKnownPos);
@@ -110,13 +110,14 @@ public class ScoreVisitor implements Visitor{
             return 1;
     }
     
-    private double specialTicketsFactor(GameState g) {
+    private static double specialTicketsFactor(GameState g) {
         double currentSpecialTickets = g.getPlayerTickets(Colour.BLACK, Ticket.DOUBLE) + g.getPlayerTickets(Colour.BLACK, Ticket.SECRET);
-        double totalSpecialTickets = initMrXTickets.get(Ticket.DOUBLE) + initMrXTickets.get(Ticket.SECRET);       
+        double totalSpecialTickets = initMrXTickets.get(Ticket.DOUBLE) + initMrXTickets.get(Ticket.SECRET);
+        double specialTicketsUsed = totalSpecialTickets - currentSpecialTickets;
         double totalRounds = GameState.getRounds().size();
         double roundsLeft = totalRounds - g.getCurrentRound();
         
-        double factor = 1 - ((roundsLeft/totalRounds) * (currentSpecialTickets/totalSpecialTickets));
+        double factor = 1 - ((roundsLeft/totalRounds) * (specialTicketsUsed/totalSpecialTickets));
         return factor;
     }
     
@@ -127,7 +128,7 @@ public class ScoreVisitor implements Visitor{
         return possiblePos;
     }*/
     
-    private void updatePositions(Set<Integer> possiblePos, List<Ticket> path, Node<Integer> nextNode) {
+    private static void updatePositions(Set<Integer> possiblePos, List<Ticket> path, Node<Integer> nextNode) {
         if(path.isEmpty())
             possiblePos.add(nextNode.value());
         
@@ -142,7 +143,7 @@ public class ScoreVisitor implements Visitor{
         }
     }
     
-    private double getDistanceValue(DirectedGraph<Integer, Double> path) {
+    private static double getDistanceValue(DirectedGraph<Integer, Double> path) {
         double value = 0;
         for(Edge<Integer, Double> e : path.getEdges()) {
             value += e.data();
@@ -150,7 +151,7 @@ public class ScoreVisitor implements Visitor{
         return value * Math.pow(path.getEdges().size(), 2);
     }
     
-    private void minimaxUpdate(NodeTree tree) {
+    public static void minimaxUpdate(GameTree root) {
         
     }
     

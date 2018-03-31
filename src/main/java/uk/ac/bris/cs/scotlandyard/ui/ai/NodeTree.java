@@ -17,16 +17,18 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
 public class NodeTree {
     private double value;
     private final Move move;
-    private final int playerCount;
-    private final int depth;
+    protected final int playerCount;
+    protected final int depth;
     private final List<NodeTree> children;
+    private NodeTree parent;
     
-    public NodeTree(double value, int playerCount, int depth, Move move) {
+    public NodeTree(double value, int playerCount, int depth, Move move, NodeTree parent) {
         this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
         this.children = new ArrayList<>();
         this.move = move;
+        this.parent = parent;
     }
     
     public List<NodeTree> getChildren() {
@@ -35,13 +37,22 @@ public class NodeTree {
     
     public NodeTree add(Move move) {
         Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        NodeTree child = new NodeTree(initialValue, playerCount, depth, move);
+        NodeTree child = new NodeTree(initialValue, playerCount, depth, move, this);
         children.add(child);
         return child;
     }
     
     public void add(NodeTree t) {
+        t.setParent(this);
         children.add(t);
+    }
+    
+    public void setParent(NodeTree parent) {
+        this.parent = parent;
+    }
+    
+    public NodeTree getParent() {
+        return parent;
     }
      
     public Boolean isMaximiser() {
