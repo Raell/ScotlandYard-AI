@@ -57,6 +57,18 @@ public class GameTree extends NodeTree {
         return list;           
     }
     
+    public void toNodeTree() {
+        double value = isMaximiser() ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+        NodeTree n = new NodeTree(value, this.playerCount, this.depth, GameState.getLastMove(), null);
+        this.getChildren().forEach(c -> {
+            n.add(c);
+        });
+        
+        this.getParent().add(n);
+        this.getParent().remove(this);
+        
+    }
+    
     public String toString() {
         return GameState.getCurrentPlayer().colour() + ": " + GameState.getCurrentPlayer().location();
     }

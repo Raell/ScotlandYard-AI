@@ -54,6 +54,10 @@ public class NodeTree {
     public NodeTree getParent() {
         return parent;
     }
+    
+    public void remove(NodeTree t) {
+        this.children.remove(t);
+    }
      
     public Boolean isMaximiser() {
         int height = getHeight();

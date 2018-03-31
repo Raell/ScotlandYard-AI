@@ -111,6 +111,11 @@ public class Athena implements PlayerFactory {
                 }
                 else {
                     //Generate new states
+                    int depth = SEARCH_DEPTH - root.getHeight();
+                    for(GameTree b : root.getBottomNodes()) {
+                        generateNextStates(b, b.getState(), depth);
+                        b.toNodeTree();
+                    }
                 }
 
                 ScoreVisitor.minimaxUpdate(root);
@@ -118,7 +123,8 @@ public class Athena implements PlayerFactory {
 //                for(GameTree t : root.getBottomNodes()) {
 //                    System.out.println(t.getValue());
 //                }
-                System.out.println(root);
+                
+                System.out.println(root.getHeight());
 
                 //ScoreVisitor v = new ScoreVisitor(view.getGraph(), initTickets.get(Colour.BLACK));
                 //root.accept(v);
