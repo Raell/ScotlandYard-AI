@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.DoubleMove;
 import uk.ac.bris.cs.scotlandyard.model.Move;
@@ -80,6 +81,10 @@ public class GameState {
     
     public ScotlandYardPlayer getCurrentPlayer() {
         return currentPlayer;
+    }
+    
+    public List<ScotlandYardPlayer> getDetectives() {
+        return players.stream().filter(d -> d.colour() != Colour.BLACK).collect(Collectors.toList());
     }
     
     public Move getLastMove() {

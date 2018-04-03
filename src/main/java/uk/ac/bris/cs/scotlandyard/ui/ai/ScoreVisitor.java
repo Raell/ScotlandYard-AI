@@ -57,11 +57,14 @@ public class ScoreVisitor {
         //DijkstraCalculator d = new DijkstraCalculator(graph);
         List<Double> distanceScore = new ArrayList<>();
         
-        for(ScotlandYardPlayer p : g.getPlayers()) {
+        for(ScotlandYardPlayer p : g.getPlayers()) {         
             if(p.isMrX())
-                continue;
+                continue;           
+            if(g.getPlayerLocation(Colour.BLACK) == g.getPlayerLocation(p.colour()))
+                return 0;
+            
             Map<Ticket, Integer> tickets = g.getPlayerTickets(p.colour());
-            DijkstraCalculator d = new DijkstraCalculator(graph, tickets);
+            DijkstraCalculator d = new DijkstraCalculator(graph, tickets);         
             DirectedGraph<Integer, Double> path = d.getResult(g.getPlayerLocation(Colour.BLACK), g.getPlayerLocation(p.colour()));
             double distance = getDistanceValue(path);
             if(distance > 0)
@@ -71,23 +74,24 @@ public class ScoreVisitor {
         if(distanceScore.isEmpty())
             return Double.POSITIVE_INFINITY;
         else {
-            Collections.sort(distanceScore);
-            double smallest = distanceScore.get(0);
-            double median;
-            
-            if(distanceScore.size() % 2 == 1)
-                median = distanceScore.get(distanceScore.size()/2);
-            else {
-                median = (distanceScore.get(distanceScore.size()/2) 
-                        + distanceScore.get((distanceScore.size()/2) - 1)) / 2;
-            }
-            
-            double score = (smallest + median) / 2;
+            double score = calculateDistanceScore(distanceScore, g.getPlayers().size() - 1);
             score *= availableMovesFactor(g);
             score *= contextualFactor(g);
             score *= specialTicketsFactor(g);
             return score;        
         }
+    }
+    
+    private static double calculateDistanceScore(List<Double> distances, int detectiveCount) {
+        Collections.sort(distances);
+        double score = 0;
+        
+        int size = distances.size();
+        for(int i = 0; i < size; i++) {
+            score += distances.get(i) * ((detectiveCount - i) / size);
+        }
+        
+        return score;
     }
     
     private static double availableMovesFactor(GameState g) {
@@ -110,9 +114,12 @@ public class ScoreVisitor {
             return 1;
     }
     
-    private static double specialTicketsFactor(GameState g) {
+    private static double specialTicketsFactor(GameState g) {             
+        double totalSpecialTickets = initMrXTickets.get(Ticket.DOUBLE) + initMrXTickets.get(Ticket.SECRET);      
+        if(totalSpecialTickets == 0)
+            return 1;
+        
         double currentSpecialTickets = g.getPlayerTickets(Colour.BLACK, Ticket.DOUBLE) + g.getPlayerTickets(Colour.BLACK, Ticket.SECRET);
-        double totalSpecialTickets = initMrXTickets.get(Ticket.DOUBLE) + initMrXTickets.get(Ticket.SECRET);
         double specialTicketsUsed = totalSpecialTickets - currentSpecialTickets;
         double totalRounds = GameState.getRounds().size();
         double roundsLeft = totalRounds - g.getCurrentRound();

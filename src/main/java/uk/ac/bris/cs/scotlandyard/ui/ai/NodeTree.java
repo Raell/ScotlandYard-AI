@@ -8,6 +8,7 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
 
 /**
@@ -19,25 +20,31 @@ public class NodeTree {
     private final Move move;
     protected final int playerCount;
     protected final int depth;
+    private double alpha;
+    private double beta;
     private final List<NodeTree> children;
     private NodeTree parent;
+    private Colour currentPlayer;
     
-    public NodeTree(double value, int playerCount, int depth, Move move, NodeTree parent) {
+    public NodeTree(double value, int playerCount, int depth, Move move, NodeTree parent, double alpha, double beta, Colour currentPlayer) {
         this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
         this.children = new ArrayList<>();
         this.move = move;
         this.parent = parent;
+        this.alpha = alpha;
+        this.beta = beta;
+        this.currentPlayer = currentPlayer;
     }
     
     public List<NodeTree> getChildren() {
         return Collections.unmodifiableList(children);
     }
     
-    public NodeTree add(Move move) {
+    public NodeTree add(Move move, double alpha, double beta, Colour currentPlayer) {
         Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        NodeTree child = new NodeTree(initialValue, playerCount, depth, move, this);
+        NodeTree child = new NodeTree(initialValue, playerCount, depth, move, this, alpha, beta, currentPlayer);
         children.add(child);
         return child;
     }
@@ -51,17 +58,36 @@ public class NodeTree {
         this.parent = parent;
     }
     
+    public Colour getCurrentPlayer() {
+        return currentPlayer;
+    }
+    
     public NodeTree getParent() {
         return parent;
+    }
+    
+    public double getAlpha() {
+        return alpha;
+    }
+    
+    public void setAlpha(double a) {
+        this.alpha = a;
+    }
+    
+    public double getBeta() {
+        return beta;
+    }
+    
+    public void setBeta(double b) {
+        this.beta = b;
     }
     
     public void remove(NodeTree t) {
         this.children.remove(t);
     }
      
-    public Boolean isMaximiser() {
-        int height = getHeight();
-        return (height % playerCount == depth % playerCount);
+    public final Boolean isMaximiser() {
+        return (currentPlayer == Colour.BLACK);
     }
 
     public int getHeight() {
