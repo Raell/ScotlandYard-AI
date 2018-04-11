@@ -29,7 +29,7 @@ public class ValidMoves{
     //private List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
-    public static void initialize(Graph<Integer, Transport> g, List<Boolean> r) {
+    public static void initialise(Graph<Integer, Transport> g, List<Boolean> r) {
         graph = g;
         rounds = r;
     }

@@ -22,7 +22,7 @@ import uk.ac.bris.cs.dijkstra.Graph;
 import uk.ac.bris.cs.dijkstra.Node;*/
 import uk.ac.bris.cs.scotlandyard.model.Transport;
 
-//COMS10009 Live Programming Example Code
+//CCOMS10009 Live Programming Example Code
 //GraphCalculator: implements base algorithm for Prim's and Dijkstra's
 public abstract class GraphCalculator {
 

@@ -35,8 +35,8 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 2;
-    private static final double DANGER_SCORE = 30.0;
+    private static final int SEARCH_DEPTH = 6;
+    private static final double DANGER_SCORE = 50.0;
     
     // TODO create a new player here
     @Override
@@ -110,8 +110,6 @@ public class Athena implements PlayerFactory {
                 }
                 
                 //System.out.println(root.getBottomNodes().get(0).getParent());
-
-                ScoreVisitor.minimaxUpdate(root);
                 
                 //System.out.println("Bottom nodes: " + root.getBottomNodes().size());
                 
@@ -134,7 +132,7 @@ public class Athena implements PlayerFactory {
                 Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
                 
                 int ran = random.nextInt(validmoves.size());
-                Move move = new ArrayList<>(validmoves).get(ran);
+                Move move = ScoreVisitor.selectMove(root);
 
                 changeRoot(move);
 
@@ -172,7 +170,7 @@ public class Athena implements PlayerFactory {
                 //state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
                 root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH, null, Colour.BLACK);
                 
-                ValidMoves.initialize(view.getGraph(), view.getRounds());
+                ValidMoves.initialise(view.getGraph(), view.getRounds());
                 //ScoreVisitor.initialize(view.getGraph(), initTickets.get(Colour.BLACK));
                 if(view.getCurrentRound() == 0)
                     initialize(view, state);
@@ -194,8 +192,8 @@ public class Athena implements PlayerFactory {
                 //System.out.println(validmoves.size());
                 
                 for(Move move : validmoves) {
-//                    if(parent.getAlpha() >= parent.getBeta())
-//                        break;
+                    if(parent.getAlpha() >= parent.getBeta())
+                        break;
                   
                     GameState nextState = state.nextState(move);
                     
@@ -206,7 +204,7 @@ public class Athena implements PlayerFactory {
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                         parent.add(bottom);
                         
-                        System.out.println(move + " : " + value);
+                        //System.out.println(move + " : " + value);
                         //System.out.println(value);
                         //System.out.println();
                         
@@ -220,8 +218,8 @@ public class Athena implements PlayerFactory {
                             if(parent.getBeta() > value) {
                                 parent.setBeta(value);
                                 parent.setValue(value);
-//                                if(value == 0)
-//                                    break;
+                                if(value == 0)
+                                    break;
                             }
                         }
                     }
@@ -243,8 +241,8 @@ public class Athena implements PlayerFactory {
                     double value = parent.isMaximiser() ? parent.getAlpha() : parent.getBeta();
                     parent.setValue(value);
                     
-                    System.out.println((SEARCH_DEPTH - depth + 1) + " : " + parent.getMove());
-                    //System.out.println(move + " : " + value);
+                    System.out.println((SEARCH_DEPTH - depth) + " : parent : " + parent.getMove());
+                    System.out.println(move + " : " + value);
                     System.out.println("Alpha: " + parent.getAlpha());
                     System.out.println("Beta: " + parent.getBeta());
                     System.out.println();
