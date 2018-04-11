@@ -59,13 +59,19 @@ public class Athena implements PlayerFactory {
         player.updateVisualiserAndProvider(visualiser, provider);
     }
     
-    public GameTree getRoot() {
+    /*public GameTree getRoot() {
         // Not immutable but to make it would cause a lot of memory to be used as the entire tree needs to be copied
-        return player.root;
-    }
+        return player.root.clone();
+    }*/
     
-    public void setRoot(GameTree newRoot) {
-        player.root = newRoot;
+    public void setRoot(Move move) {
+        for(NodeTree child : player.root.getChildren()) {
+            if(child.getMove().equals(move)) {
+                player.root = GameTree.swapRoot(child, player.root.getState().nextState(move));
+                return;
+            }
+        }
+        toRebuildTree();
     }
     
     public void toRebuildTree() {
@@ -206,7 +212,7 @@ public class Athena implements PlayerFactory {
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                         parent.add(bottom);
                         
-                        System.out.println(move + " : " + value);
+                        //System.out.println(move + " : " + value);
                         //System.out.println(value);
                         //System.out.println();
                         
@@ -243,11 +249,11 @@ public class Athena implements PlayerFactory {
                     double value = parent.isMaximiser() ? parent.getAlpha() : parent.getBeta();
                     parent.setValue(value);
                     
-                    System.out.println((SEARCH_DEPTH - depth + 1) + " : " + parent.getMove());
+                    //System.out.println((SEARCH_DEPTH - depth + 1) + " : " + parent.getMove());
                     //System.out.println(move + " : " + value);
-                    System.out.println("Alpha: " + parent.getAlpha());
-                    System.out.println("Beta: " + parent.getBeta());
-                    System.out.println();
+                    //System.out.println("Alpha: " + parent.getAlpha());
+                    //System.out.println("Beta: " + parent.getBeta());
+                    //System.out.println();
                     //System.out.println();
                     
                 }

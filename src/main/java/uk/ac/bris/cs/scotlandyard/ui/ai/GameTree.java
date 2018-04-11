@@ -39,7 +39,7 @@ public class GameTree extends NodeTree {
     }
     
     public GameState getState() {
-        return GameState;
+        return new GameState(GameState, super.getMove());
     }
     
     public List<GameTree> getBottomNodes() {

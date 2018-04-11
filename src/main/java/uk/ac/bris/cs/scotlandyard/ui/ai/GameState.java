@@ -49,7 +49,7 @@ public class GameState {
         ticketsSinceLastKnown = new LinkedList<>();
     } 
     
-    private GameState(GameState g, Move move) {
+    public GameState(GameState g, Move move) {
         this.lastMove = move;
         this.players = clonePlayers(g.players);
         this.cToP = this.setColoursToPlayersMap();

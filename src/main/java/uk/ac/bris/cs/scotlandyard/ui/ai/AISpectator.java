@@ -8,7 +8,6 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 import java.util.Set;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
-import uk.ac.bris.cs.scotlandyard.model.Player;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardView;
 import uk.ac.bris.cs.scotlandyard.model.Spectator;
 
@@ -30,19 +29,7 @@ public class AISpectator implements Spectator {
         if(move.colour() == Colour.BLACK)
             return;
         
-        GameTree oldRoot = ai.getRoot();
-        boolean changedRoot = false;
-        
-        for(NodeTree c : oldRoot.getChildren()) {
-            if(c.getMove().equals(move)) {
-                GameTree newRoot = GameTree.swapRoot(c, oldRoot.getState().nextState(move));
-                ai.setRoot(newRoot);
-                changedRoot = true;
-                break;
-            }
-        }
-        if(!changedRoot)
-            ai.toRebuildTree();
+        ai.setRoot(move);
     }
 
     @Override
