@@ -185,7 +185,7 @@ public class Athena implements PlayerFactory {
                 
                 //System.out.println(ScoreVisitor.scoreState(state));
                 
-                restrictSpecial = !(view.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
+                //restrictSpecial = !(view.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
                 generateNextStates(root, state, SEARCH_DEPTH);
                 rebuildTree = false;
             }
@@ -195,6 +195,7 @@ public class Athena implements PlayerFactory {
                     return;
                 
                 ScotlandYardPlayer player = state.getCurrentPlayer(); 
+                restrictSpecial = !(GameState.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
                 Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
                 
                 //System.out.println(validmoves.size());
