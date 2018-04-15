@@ -119,7 +119,7 @@ public class ScoreVisitor {
     }
     
     private static double availableMovesFactor(GameState g) {
-        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false);
+        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false, true);
         int moveCount = validmoves.size();       
         return (moveCount <= 10) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
     }
@@ -148,7 +148,7 @@ public class ScoreVisitor {
         double totalRounds = GameState.getRounds().size();
         double roundsLeft = totalRounds - g.getCurrentRound();
         
-        double factor = 1 - ((roundsLeft/totalRounds) * (specialTicketsUsed/totalSpecialTickets));
+        double factor = 1 - (0.25 * (roundsLeft/totalRounds) * (specialTicketsUsed/totalSpecialTickets));
         return factor;
     }
     

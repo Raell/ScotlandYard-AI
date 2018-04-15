@@ -5,7 +5,9 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +73,7 @@ public class ValidMoves{
     }
 
     //gets the possible double moves mrX can make
-    private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, Set<TicketMove> tMoves,
+    private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, int location, Set<TicketMove> tMoves,
             int currentRound, List<ScotlandYardPlayer> detectives){
         Set<Move> doublemoves = new HashSet<>();
 
@@ -80,7 +82,7 @@ public class ValidMoves{
             tMoves.forEach((firstMove) -> {
                 //get the ticket moves from each of the first moves' destinations
                 Set<TicketMove> secondMoves = possibleStandardMoves(player, firstMove.destination(), false, detectives);
-                if(player.hasTickets(Ticket.SECRET))
+                if(useSecret(player, currentRound + 1, location))
                     secondMoves.addAll(possibleStandardMoves(player, firstMove.destination(), true, detectives));
 
                 //creates the double moves
@@ -97,22 +99,23 @@ public class ValidMoves{
     //returns the set of possible moves mrX can make
     private static Set<Move> mrXMoves(ScotlandYardPlayer player, int location, 
             int currentRound, List<ScotlandYardPlayer> detectives,
-            boolean restrictSpecial) {
+            boolean doubleUsage, boolean scoreChecking) {
         Set<Move> moves = new HashSet<>();
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
-        moves.addAll(possibleStandardMoves(player, location, false, detectives));
+        tMoves.addAll(possibleStandardMoves(player, location, false, detectives));
         
-        if(!restrictSpecial) {
-            if(player.hasTickets(Ticket.SECRET)){              
-                tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
-            }
+        
+        if(!scoreChecking && useSecret(player, currentRound, location)){              
+            tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
+        }
 
-            moves.addAll(tMoves);
-
+        moves.addAll(tMoves);
+            
+        if(doubleUsage) {
             //adds the double moves mrX can make
-            Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound, detectives);
+            Set<Move> doublemoves = possibleDoubleMoves(player, location, tMoves, currentRound, detectives);
             moves.addAll(doublemoves);
         }
         
@@ -120,11 +123,12 @@ public class ValidMoves{
     }
 
     //returns the valid mvoes for the given player
-    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean restrictSpecial) {
+    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean doubleUsage, boolean scoreChecking) {
         Set<Move> moves = new HashSet<>();
-
+        //if(!scoreChecking)
+            //System.out.println("UseDouble: " + doubleUsage);
         if(player.isMrX())
-            moves.addAll(mrXMoves(player, location, currentRound, detectives, restrictSpecial));
+            moves.addAll(mrXMoves(player, location, currentRound, detectives, doubleUsage, scoreChecking));
         else {
             moves.addAll(possibleStandardMoves(player, location, false, detectives));
             //if the detective can't make a ticket move, they make a pass move
@@ -134,4 +138,29 @@ public class ValidMoves{
 
         return moves;
     }
+    
+    private static boolean useSecret(ScotlandYardPlayer player, int currentRound, int location) {
+        
+        Node<Integer> locNode = graph.getNode(location);        
+        Collection<Edge<Integer, Transport>> fromEdges = graph.getEdgesFrom(locNode);
+        Collection<Transport> transports = new HashSet<>(Arrays.asList(Transport.values()));
+        
+        int transportCount = 0;
+        boolean multipleTransportAvailable = false;
+        
+        for(Edge<Integer, Transport> e : fromEdges) {                    
+            if(transports.contains(e.data())) {               
+                transportCount++;
+                
+                if(transportCount > 1) {
+                    multipleTransportAvailable = true;
+                    break;
+                }               
+                transports.remove(e.data());
+            }           
+        }      
+        
+        return player.hasTickets(Ticket.SECRET) && !rounds.get(currentRound) && multipleTransportAvailable;
+    }
+    
 }

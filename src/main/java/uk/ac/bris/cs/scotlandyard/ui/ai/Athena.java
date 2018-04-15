@@ -35,8 +35,8 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 6;
-    private static final double DANGER_SCORE = 50.0;
+    private static final int SEARCH_DEPTH = 5;
+    private static final double DANGER_SCORE = 20.0;
     
     // TODO create a new player here
     @Override
@@ -82,12 +82,12 @@ public class Athena implements PlayerFactory {
     // TODO A sample player that selects a random move
     private static class MyPlayer implements Player {
 
-            private final Random random = new Random();
+            //private final Random random = new Random();
             private final Map<Colour,Map<Ticket, Integer>> initTickets = new HashMap<>();
             private Visualiser visualiser;
             private ResourceProvider provider;
             private GameTree root;
-            private boolean restrictSpecial;
+            //private boolean restrictSpecial;
             private boolean rebuildTree = true;
             
             public void updateVisualiserAndProvider(Visualiser visualiser, ResourceProvider provider) {
@@ -100,7 +100,7 @@ public class Athena implements PlayerFactory {
                             Consumer<Move> callback) {
                 // TODO do something interesting here; find the best move
                 // picks a random move
-                restrictSpecial = true;
+                //restrictSpecial = true;
                 
                 if(rebuildTree) {
                     initialMove(view, location);
@@ -138,9 +138,18 @@ public class Athena implements PlayerFactory {
                 //Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
                 
                 //int ran = random.nextInt(validmoves.size());
+                /*System.out.println("Old: " + ScoreVisitor.scoreState(root.getState()));
+                System.out.println(useDouble(root.getState()));
+                boolean anyMatch = root.getChildren().stream().anyMatch(c -> c.getMove().getClass() == DoubleMove.class);
+                System.out.println("Has DoubleMove: " + anyMatch);
+                System.out.println();*/
                 Move move = ScoreVisitor.selectMove(root);
 
                 changeRoot(move);
+                
+                //System.out.println("New: " + ScoreVisitor.scoreState(root.getState()));
+                //System.out.println(useDouble(root.getState()));
+                //System.out.println();
 
                 displayMrXMove(move, location);
 
@@ -192,9 +201,16 @@ public class Athena implements PlayerFactory {
                 if(depth <= 0)
                     return;
                 
-                ScotlandYardPlayer player = state.getCurrentPlayer(); 
-                restrictSpecial = !(GameState.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
-                Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
+                ScotlandYardPlayer player = state.getCurrentPlayer();
+                //restrictSpecial = !(GameState.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
+                
+                /*System.out.println("Old: " + ScoreVisitor.scoreState(state));
+                System.out.println("Athena UseDouble: " + useDouble(state));*/
+                
+                Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), useDouble(state), false);
+                
+                /*boolean anyMatch = validmoves.stream().anyMatch(c -> c.getClass() == DoubleMove.class);
+                System.out.println("Has DoubleMove: " + anyMatch + "\n");*/
                 
                 //System.out.println(validmoves.size());
                 
@@ -258,6 +274,19 @@ public class Athena implements PlayerFactory {
                 }
                                                               
             }
+
+            private boolean useDouble(GameState state) {
+                int currentRound = state.getCurrentRound();
+                boolean currRoundIsReveal = GameState.getRounds().get(currentRound) ;
+                boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
+                double score = ScoreVisitor.scoreState(state);
+                return ((currRoundIsReveal || lastRoundIsReveal) && inDanger(score, true)) || inDanger(score, false);
+            }
+            
+            private boolean inDanger(double score, boolean revealed) {
+                double danger = revealed ? DANGER_SCORE : DANGER_SCORE * 0.5;
+                return score <= danger;
+            }
             
             private boolean isMrXCaught(GameState g) {
                 int mrXPos = g.getPlayerLocation(Colour.BLACK);
@@ -292,7 +321,7 @@ public class Athena implements PlayerFactory {
                         l.setStroke(Color.VIOLET);
                         l.setStrokeWidth(10);
                         Circle c = new Circle(d.getX(), d.getY(), 30, Color.TRANSPARENT);
-                        c.setStroke((i == 1 && dest.size() > 1) ? Color.CYAN : Color.VIOLET);
+                        c.setStroke((i == 1 && dest.size() > 1) || dest.size() == 1? Color.CYAN : Color.VIOLET);
                         c.setStrokeWidth(10);
                         pane.getChildren().add(l);
                         pane.getChildren().add(c);
