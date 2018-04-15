@@ -31,7 +31,7 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  * @author admin
  */
 public class ScoreVisitor {
-    private Move selectedMove;
+    //private Move selectedMove;
     private static Graph<Integer, Transport> graph;
     private static Map<Ticket, Integer> initMrXTickets;
     
@@ -54,7 +54,7 @@ public class ScoreVisitor {
     }*/
     
     public static Move selectMove(GameTree root) {
-        Double value = Double.NEGATIVE_INFINITY;
+        /*Double value = Double.NEGATIVE_INFINITY;
         Move selected = root.getMove();
         for(NodeTree child : root.getChildren()){
             if(child.getValue() > value) {
@@ -65,7 +65,15 @@ public class ScoreVisitor {
             System.out.println("Possible: " + child.getMove().toString() + " : " + child.getValue());
         }
         System.out.println("Chosen: " + selected.toString() + "\n");
-        return selected;
+        return selected;*/
+        
+        return root.getChildren()
+                .stream()
+                .filter(c -> c.getValue() == root.getValue())
+                .findFirst()
+                .get()
+                .getMove();
+        
     }
     
     public static double scoreState(GameState g) {
