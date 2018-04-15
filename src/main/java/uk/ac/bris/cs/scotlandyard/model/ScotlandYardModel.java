@@ -80,7 +80,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
             }
          
             //check whether the detectives can move
-            boolean detectivesCanMove = detectives.stream().anyMatch(p -> validMoves(p, p.location()).iterator().next().getClass() != PassMove.class);
+            boolean detectivesCanMove = detectives.stream()
+                    .anyMatch(p -> validMoves(p, p.location()).iterator().next()
+                            .getClass() != PassMove.class);
             gameOver = !detectivesCanMove;                      
             
             //initialise mrX and check if the players are valid
@@ -127,16 +129,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
     }
    
     //checks whether a player has enough tickets to make the move
-    private boolean hasValidTicket(ScotlandYardPlayer player, TicketMove move) {      
-        return player.hasTickets(move.ticket());
-    }
-    
-    //checks whether a player has enough tickets to make the move
-    private boolean hasValidTicket(ScotlandYardPlayer player, DoubleMove move) {
-        if(move.hasSameTicket())
-            return player.hasTickets(move.firstMove().ticket(), 2);
-        else
-            return (player.hasTickets(move.firstMove().ticket()) && player.hasTickets(move.secondMove().ticket()));
+    private boolean hasValidTicket(ScotlandYardPlayer player, Move move) {   
+        HasValidVis v = new HasValidVis(player);
+        move.visit(v);
+        return v.hasTicket;
     }
     
     //returns all the ticket moves a player can make, possibly with secret tickets 
@@ -364,42 +360,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         mrX.player().makeMove(this, mrX.location(), validMoves(mrX, mrX.location()), this);            
     }
     
-    //gets the hidden move
+    //gets the hidden move using a visitor
     private Move hiddenMove(Move move) {
-            if(move.getClass() == DoubleMove.class)
-                return hiddenMove((DoubleMove) move);
+            HiddenMoveVis v = new HiddenMoveVis(lastRevealed, rounds, currentRound);
+            move.visit(v);
+            if(v.isDouble)
+                return new DoubleMove(v.firstMove.colour(), v.firstMove.ticket(), v.firstDes, v.secondMove.ticket(), v.secondDes);
             else
-                return hiddenMove((TicketMove) move);
+                return new TicketMove(v.firstMove.colour(), v.firstMove.ticket(), v.destination);
     }
-    
-    private Move hiddenMove(DoubleMove move) {
-        int firstDes = lastRevealed;
-        int secondDes = lastRevealed;
         
-        //if the first round is a reveal round, reveal that destination and
-        //update the second one
-        if(rounds.get(currentRound)) {
-            firstDes = move.firstMove().destination();
-            if(!rounds.get(currentRound + 1))
-                secondDes = firstDes;
-        }
-        
-        //if the second round is a reveal round, reveal that destination, too
-        if(rounds.get(currentRound + 1))
-            secondDes = move.secondMove().destination();
-        
-        return new DoubleMove(move.colour(), move.firstMove().ticket(), firstDes, move.secondMove().ticket(), secondDes);
-    }
-    
-    private Move hiddenMove(TicketMove move) {
-        int des = lastRevealed;
-        
-        if(currentRound > 0 && rounds.get(currentRound - 1))
-            des = move.destination();
-        
-        return new TicketMove(move.colour(), move.ticket(), des);
-    }
-    
     //deals with mrX making a move
     private void acceptMrXCallback(Move move) {      
         //if it's a ticket move, increment the round and update mrX's variables
@@ -504,44 +474,19 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
         } 
     }
     
-    //return the destination of a move
-    private int moveDestination(ScotlandYardPlayer player, Move move) {
-        if(move.getClass() == TicketMove.class)
-            return moveDestination((TicketMove) move);
-        else if(move.getClass() == DoubleMove.class)
-            return moveDestination((DoubleMove) move);
-        else
-            return player.location();
+    //uses a visitor to get the move destination, returning the player's current
+    //location if it's a pass move
+    private int moveDestination(ScotlandYardPlayer player, Move move){
+        DestinationVis v = new DestinationVis();
+        move.visit(v);
+        if(v.destination == -1) return player.location();
+        else return v.destination;
     }
     
-    private int moveDestination(TicketMove move) {
-        return move.destination();
-    }
-    
-    private int moveDestination(DoubleMove move) {
-        return move.finalDestination();
-    }
-    
-    //checks whether a move is valid
+    //checks whether a move is valid with a visitor
     private boolean isValidMove(ScotlandYardPlayer player, Move move) {
-        if(move.getClass() == TicketMove.class)
-            return isValidMove(player, (TicketMove) move);
-        else if(move.getClass() == DoubleMove.class)
-            return isValidMove(player, (DoubleMove) move);
-        else
-            return isValidMove(player, (PassMove) move);
+        IsValidVis v = new IsValidVis(validMoves(player, player.location()));
+        move.visit(v);
+        return v.isValid;
     }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, PassMove move) {
-        return (validMoves(player, player.location()).contains(move));
-    }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, TicketMove move) {
-        return (validMoves(player, player.location()).contains(move));
-    }
-    
-    private boolean isValidMove(ScotlandYardPlayer player, DoubleMove move) {      
-        return (validMoves(player, player.location()).contains(move));
-    }
-
 }
