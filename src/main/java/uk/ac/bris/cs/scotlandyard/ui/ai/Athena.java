@@ -35,8 +35,8 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 2;
-    private static final double DANGER_SCORE = 30.0;
+    private static final int SEARCH_DEPTH = 6;
+    private static final double DANGER_SCORE = 50.0;
     
     // TODO create a new player here
     @Override
@@ -116,8 +116,6 @@ public class Athena implements PlayerFactory {
                 }
                 
                 //System.out.println(root.getBottomNodes().get(0).getParent());
-
-                ScoreVisitor.minimaxUpdate(root);
                 
                 //System.out.println("Bottom nodes: " + root.getBottomNodes().size());
                 
@@ -134,13 +132,13 @@ public class Athena implements PlayerFactory {
                 //ScoreVisitor v = new ScoreVisitor(view.getGraph(), initTickets.get(Colour.BLACK));
                 //root.accept(v);
                 
-                GameState state = new GameState(view, location); 
-                ScotlandYardPlayer player = state.getCurrentPlayer(); 
+                //GameState state = new GameState(view, location); 
+                //ScotlandYardPlayer player = state.getCurrentPlayer(); 
                 //System.out.println(state.getDetectives().size());
-                Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
+                //Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
                 
-                int ran = random.nextInt(validmoves.size());
-                Move move = new ArrayList<>(validmoves).get(ran);
+                //int ran = random.nextInt(validmoves.size());
+                Move move = ScoreVisitor.selectMove(root);
 
                 changeRoot(move);
 
@@ -178,7 +176,7 @@ public class Athena implements PlayerFactory {
                 //state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
                 root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH, null, Colour.BLACK);
                 
-                ValidMoves.initialize(view.getGraph(), view.getRounds());
+                ValidMoves.initialise(view.getGraph(), view.getRounds());
                 //ScoreVisitor.initialize(view.getGraph(), initTickets.get(Colour.BLACK));
                 if(view.getCurrentRound() == 0)
                     initialize(view, state);
@@ -201,8 +199,8 @@ public class Athena implements PlayerFactory {
                 //System.out.println(validmoves.size());
                 
                 for(Move move : validmoves) {
-//                    if(parent.getAlpha() >= parent.getBeta())
-//                        break;
+                    if(parent.getAlpha() >= parent.getBeta())
+                        break;
                   
                     GameState nextState = state.nextState(move);
                     
@@ -227,8 +225,8 @@ public class Athena implements PlayerFactory {
                             if(parent.getBeta() > value) {
                                 parent.setBeta(value);
                                 parent.setValue(value);
-//                                if(value == 0)
-//                                    break;
+                                if(value == 0)
+                                    break;
                             }
                         }
                     }
@@ -261,26 +259,11 @@ public class Athena implements PlayerFactory {
                                                               
             }
             
-//            private void generateNextStates(GameTree parent, int depth) {
-//                
-//                if(depth > 0) {
-//                    
-//                    GameState state = parent.getState();
-//                    ScotlandYardPlayer player = state.getCurrentPlayer();                   
-//                    Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getPlayers());
-//                    
-//                    for(Move move : validmoves) {
-//                        GameState nextState = state.nextState(move);
-//                        NodeTree child = parent.add(move);  
-//                        //System.out.println("Depth: " + (SEARCH_DEPTH - depth + 1) + " " + player.colour());
-//                        generateNextStates(child, depth - 1);
-//                    }
-//                }               
-//            }
-            
             private boolean isMrXCaught(GameState g) {
                 int mrXPos = g.getPlayerLocation(Colour.BLACK);
-                return g.getDetectives().stream().anyMatch(d -> d.location() == mrXPos);
+                return g.getDetectives()
+                        .stream()
+                        .anyMatch(d -> d.location() == mrXPos);
             }
             
             private void displayMrXMove(Move move, int location) {

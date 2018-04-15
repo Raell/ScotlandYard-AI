@@ -21,6 +21,7 @@ import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
+import uk.ac.bris.cs.scotlandyard.model.PassMove;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
 import uk.ac.bris.cs.scotlandyard.model.Transport;
@@ -30,7 +31,7 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  * @author admin
  */
 public class ScoreVisitor {
-    private Move selectedMove;
+    //private Move selectedMove;
     private static Graph<Integer, Transport> graph;
     private static Map<Ticket, Integer> initMrXTickets;
     
@@ -51,6 +52,29 @@ public class ScoreVisitor {
         });
         minimaxUpdate(tree);
     }*/
+    
+    public static Move selectMove(GameTree root) {
+        /*Double value = Double.NEGATIVE_INFINITY;
+        Move selected = root.getMove();
+        for(NodeTree child : root.getChildren()){
+            if(child.getValue() > value) {
+                selected = child.getMove();
+                value = child.getValue();
+            }
+                
+            System.out.println("Possible: " + child.getMove().toString() + " : " + child.getValue());
+        }
+        System.out.println("Chosen: " + selected.toString() + "\n");
+        return selected;*/
+        
+        return root.getChildren()
+                .stream()
+                .filter(c -> c.getValue() == root.getValue())
+                .findFirst()
+                .get()
+                .getMove();
+        
+    }
     
     public static double scoreState(GameState g) {
         //TODO Run Dijkstra algorithm on each detecetive to get distance
@@ -97,7 +121,7 @@ public class ScoreVisitor {
     private static double availableMovesFactor(GameState g) {
         Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false);
         int moveCount = validmoves.size();       
-        return (moveCount <= 10) ? (moveCount == 0) ? 0.0 : 0.8 : 1.0;
+        return (moveCount <= 10) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
     }
     
     private static double contextualFactor(GameState g) {
@@ -108,7 +132,7 @@ public class ScoreVisitor {
             Set<Integer> possiblePos = new HashSet<>();
             updatePositions(possiblePos, ticketsUsed, start);
 
-            return (possiblePos.size() <= 2) ? (possiblePos.size() == 1) ? 0.2 : 0.5 : 1;
+            return (possiblePos.size() <= 2) ? ((possiblePos.size() == 1) ? 0.2 : 0.5) : 1;
         }
         else
             return 1;
@@ -156,10 +180,6 @@ public class ScoreVisitor {
             value += e.data();
         }
         return value * Math.pow(path.getEdges().size(), 2);
-    }
-    
-    public static void minimaxUpdate(GameTree root) {
-        
     }
     
 }

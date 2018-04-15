@@ -84,7 +84,10 @@ public class GameState {
     }
     
     public List<ScotlandYardPlayer> getDetectives() {
-        return players.stream().filter(d -> d.colour() != Colour.BLACK).collect(Collectors.toList());
+        return players
+                .stream()
+                .filter(d -> d.colour() != Colour.BLACK)
+                .collect(Collectors.toList());
     }
     
     public Move getLastMove() {
