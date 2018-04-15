@@ -143,7 +143,7 @@ public class Athena implements PlayerFactory {
                 boolean anyMatch = root.getChildren().stream().anyMatch(c -> c.getMove().getClass() == DoubleMove.class);
                 System.out.println("Has DoubleMove: " + anyMatch);
                 System.out.println();*/
-                Move move = ScoreVisitor.selectMove(root);
+                Move move = ScoreGenerator.selectMove(root);
 
                 changeRoot(move);
                 
@@ -151,7 +151,7 @@ public class Athena implements PlayerFactory {
                 //System.out.println(useDouble(root.getState()));
                 //System.out.println();
 
-                displayMrXMove(move, location);
+                //displayMrXMove(move, location);
 
                 callback.accept(move);
 
@@ -175,7 +175,7 @@ public class Athena implements PlayerFactory {
             
             private void initialize(ScotlandYardView view, GameState state) {
                 state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
-                ScoreVisitor.initialize(view.getGraph(), initTickets.get(Colour.BLACK));
+                ScoreGenerator.initialize(view.getGraph(), initTickets.get(Colour.BLACK));
             }
             
             private void initialMove(ScotlandYardView view, int location) {
@@ -223,7 +223,7 @@ public class Athena implements PlayerFactory {
                     //System.out.println((SEARCH_DEPTH - depth + 1) + " : " + move);
                     
                     if(depth == 1 || isMrXCaught(nextState)) {
-                        double value = ScoreVisitor.scoreState(nextState);
+                        double value = ScoreGenerator.scoreState(nextState);
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                         parent.add(bottom);
                         
@@ -279,7 +279,7 @@ public class Athena implements PlayerFactory {
                 int currentRound = state.getCurrentRound();
                 boolean currRoundIsReveal = GameState.getRounds().get(currentRound) ;
                 boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
-                double score = ScoreVisitor.scoreState(state);
+                double score = ScoreGenerator.scoreState(state);
                 return ((currRoundIsReveal || lastRoundIsReveal) && inDanger(score, true)) || inDanger(score, false);
             }
             

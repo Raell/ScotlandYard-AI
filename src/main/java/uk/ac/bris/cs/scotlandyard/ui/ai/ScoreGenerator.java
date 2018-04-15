@@ -30,14 +30,14 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author admin
  */
-public class ScoreVisitor {
+public class ScoreGenerator {
     //private Move selectedMove;
     private static Graph<Integer, Transport> graph;
     private static Map<Ticket, Integer> initMrXTickets;
     
     public static void initialize(Graph<Integer, Transport> graph, Map<Ticket, Integer> initMrXTickets) {
-        ScoreVisitor.graph = graph;
-        ScoreVisitor.initMrXTickets = initMrXTickets;
+        ScoreGenerator.graph = graph;
+        ScoreGenerator.initMrXTickets = initMrXTickets;
     }
     
     /*@Override
