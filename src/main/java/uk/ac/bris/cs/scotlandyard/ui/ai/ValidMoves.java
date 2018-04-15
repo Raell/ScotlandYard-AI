@@ -24,14 +24,13 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author Raell
  */
-class ValidMoves{ 
+public class ValidMoves{ 
     private static Graph<Integer, Transport> graph;
-    private static List<ScotlandYardPlayer> detectives;
+    //private List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
-    static void initialize(Graph<Integer, Transport> g, List<ScotlandYardPlayer> d, List<Boolean> r) {
+    public static void initialise(Graph<Integer, Transport> g, List<Boolean> r) {
         graph = g;
-        detectives = d;
         rounds = r;
     }
     
@@ -50,7 +49,7 @@ class ValidMoves{
 
     //returns all the ticket moves a player can make, possibly with secret tickets 
     //if the player is mrX
-    private static Set<TicketMove> possibleStandardMoves(ScotlandYardPlayer player, int location, boolean secret) {   
+    private static Set<TicketMove> possibleStandardMoves(ScotlandYardPlayer player, int location, boolean secret, List<ScotlandYardPlayer> detectives) {   
         Set<TicketMove> moves = new HashSet<>();
 
 
@@ -73,16 +72,16 @@ class ValidMoves{
 
     //gets the possible double moves mrX can make
     private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, Set<TicketMove> tMoves,
-            int currentRound){
+            int currentRound, List<ScotlandYardPlayer> detectives){
         Set<Move> doublemoves = new HashSet<>();
 
         //adds the doublemoves
         if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
             tMoves.forEach((firstMove) -> {
                 //get the ticket moves from each of the first moves' destinations
-                Set<TicketMove> secondMoves = possibleStandardMoves(player, firstMove.destination(), false);
+                Set<TicketMove> secondMoves = possibleStandardMoves(player, firstMove.destination(), false, detectives);
                 if(player.hasTickets(Ticket.SECRET))
-                    secondMoves.addAll(possibleStandardMoves(player, firstMove.destination(), true));
+                    secondMoves.addAll(possibleStandardMoves(player, firstMove.destination(), true, detectives));
 
                 //creates the double moves
                 for(TicketMove secondMove : secondMoves) {
@@ -97,34 +96,37 @@ class ValidMoves{
 
     //returns the set of possible moves mrX can make
     private static Set<Move> mrXMoves(ScotlandYardPlayer player, int location, 
-            int currentRound) {
+            int currentRound, List<ScotlandYardPlayer> detectives,
+            boolean restrictSpecial) {
         Set<Move> moves = new HashSet<>();
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
-        tMoves.addAll(possibleStandardMoves(player, location, false));
+        moves.addAll(possibleStandardMoves(player, location, false, detectives));
+        
+        if(!restrictSpecial) {
+            if(player.hasTickets(Ticket.SECRET)){              
+                tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
+            }
 
-        if(player.hasTickets(Ticket.SECRET)){              
-            tMoves.addAll(possibleStandardMoves(player, location, true));
+            moves.addAll(tMoves);
+
+            //adds the double moves mrX can make
+            Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound, detectives);
+            moves.addAll(doublemoves);
         }
-
-        moves.addAll(tMoves);
-
-        //adds the double moves mrX can make
-        Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound);
-        moves.addAll(doublemoves);
-
+        
         return moves;
     }
 
     //returns the valid mvoes for the given player
-    static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound) {
+    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean restrictSpecial) {
         Set<Move> moves = new HashSet<>();
 
         if(player.isMrX())
-            moves.addAll(mrXMoves(player, location, currentRound));
+            moves.addAll(mrXMoves(player, location, currentRound, detectives, restrictSpecial));
         else {
-            moves.addAll(possibleStandardMoves(player, location, false));
+            moves.addAll(possibleStandardMoves(player, location, false, detectives));
             //if the detective can't make a ticket move, they make a pass move
             if(moves.isEmpty())              
                 moves.add(new PassMove(player.colour()));
