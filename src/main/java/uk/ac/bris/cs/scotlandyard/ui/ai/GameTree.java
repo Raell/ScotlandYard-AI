@@ -6,7 +6,6 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
@@ -28,7 +27,6 @@ public class GameTree extends NodeTree {
         super(value, playerCount, depth, move, null, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, currentPlayer);
         GameState = state;       
     }
-    
     
     public static GameTree swapRoot(NodeTree newRoot, GameState newState) {
         GameTree root = new GameTree(newState, newRoot.getValue(), newRoot.playerCount, newRoot.depth, null, newState.getCurrentPlayer().colour());
@@ -71,7 +69,6 @@ public class GameTree extends NodeTree {
             p.add(n);
             p.remove(this);
         }
-        
     }
     
     public String toString() {

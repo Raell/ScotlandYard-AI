@@ -2,10 +2,9 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import javafx.application.Platform;
@@ -35,7 +34,7 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 5;
+    private static final int SEARCH_DEPTH = 3;
     private static final double DANGER_SCORE = 20.0;
     
     // TODO create a new player here
@@ -98,9 +97,8 @@ public class Athena implements PlayerFactory {
             @Override
             public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
                             Consumer<Move> callback) {
-                // TODO do something interesting here; find the best move
-                // picks a random move
-                //restrictSpecial = true;
+                
+                //final long startTime = System.currentTimeMillis();
                 
                 if(rebuildTree) {
                     initialMove(view, location);
@@ -108,65 +106,29 @@ public class Athena implements PlayerFactory {
                 else {
                     //Generate new states
                     int depth = SEARCH_DEPTH - root.getHeight();
-                    for(GameTree b : root.getBottomNodes()) {
-                        generateNextStates(b, b.getState(), depth);
-                        //System.out.println(b.getParent());
-                        //b.toNodeTree();
-                    }
+                    root.getBottomNodes().forEach((b) -> {                    
+                        generateNextStates(b, b.getState(), depth, 0);
+                        b.toNodeTree();
+                    });
+                    recalculateValues();
                 }
                 
-                //System.out.println(root.getBottomNodes().get(0).getParent());
+                //final long endTime = System.currentTimeMillis();
+                //System.out.println("Execution Time: " + (double) (endTime - startTime) / 1000 + " secs");
                 
-                //System.out.println("Bottom nodes: " + root.getBottomNodes().size());
-                
-                /*for(GameTree t : root.getBottomNodes()) {
-                    
-                    System.out.println(t.getState().getPlayerLocation(Colour.BLACK));
-                    System.out.println(t.getState().getPlayerLocation(Colour.BLUE));
-                    System.out.println(t.getValue());
-                    System.out.println();
-                }*/
-                
-                //System.out.println(root.getHeight());
-
-                //ScoreVisitor v = new ScoreVisitor(view.getGraph(), initTickets.get(Colour.BLACK));
-                //root.accept(v);
-                
-                //GameState state = new GameState(view, location); 
-                //ScotlandYardPlayer player = state.getCurrentPlayer(); 
-                //System.out.println(state.getDetectives().size());
-                //Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), restrictSpecial);
-                
-                //int ran = random.nextInt(validmoves.size());
-                /*System.out.println("Old: " + ScoreVisitor.scoreState(root.getState()));
-                System.out.println(useDouble(root.getState()));
-                boolean anyMatch = root.getChildren().stream().anyMatch(c -> c.getMove().getClass() == DoubleMove.class);
-                System.out.println("Has DoubleMove: " + anyMatch);
-                System.out.println();*/
                 Move move = ScoreGenerator.selectMove(root);
-
                 changeRoot(move);
-                
-                //System.out.println("New: " + ScoreVisitor.scoreState(root.getState()));
-                //System.out.println(useDouble(root.getState()));
-                //System.out.println();
-
-                //displayMrXMove(move, location);
-
+                displayMrXMove(move, location);              
                 callback.accept(move);
 
             }
             
             private void changeRoot(Move move) {
                 GameTree newRoot = root;
-                //System.out.println(move);
-                //System.out.println("Old Root: " + root);
 
                 for(NodeTree c : root.getChildren()) {
                     if(c.getMove().equals(move)) {
                         newRoot = GameTree.swapRoot(c, root.getState().nextState(move));
-                        //System.out.println("New Root: " + newRoot);
-                        //System.out.println("Changed Root");
                         break;
                     }
                 }
@@ -193,91 +155,81 @@ public class Athena implements PlayerFactory {
                 //System.out.println(ScoreVisitor.scoreState(state));
                 
                 //restrictSpecial = !(view.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
-                generateNextStates(root, state, SEARCH_DEPTH);
+                generateNextStates(root, state, SEARCH_DEPTH, 0);
                 rebuildTree = false;
             }
             
-            private void generateNextStates(NodeTree parent, GameState state, int depth) {
+            private void generateNextStates(NodeTree parent, GameState state, int depth, int indent) {
+                //final long startTime = System.currentTimeMillis();
                 if(depth <= 0)
                     return;
                 
-                ScotlandYardPlayer player = state.getCurrentPlayer();
-                //restrictSpecial = !(GameState.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
-                
-                /*System.out.println("Old: " + ScoreVisitor.scoreState(state));
-                System.out.println("Athena UseDouble: " + useDouble(state));*/
-                
+                ScotlandYardPlayer player = state.getCurrentPlayer();             
                 Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), useDouble(state), false);
-                
-                /*boolean anyMatch = validmoves.stream().anyMatch(c -> c.getClass() == DoubleMove.class);
-                System.out.println("Has DoubleMove: " + anyMatch + "\n");*/
-                
-                //System.out.println(validmoves.size());
                 
                 for(Move move : validmoves) {
                     if(parent.getAlpha() >= parent.getBeta())
                         break;
-                  
-                    GameState nextState = state.nextState(move);
                     
-                    //System.out.println((SEARCH_DEPTH - depth + 1) + " : " + move);
+                    GameState nextState = state.nextState(move);;
                     
                     if(depth == 1 || isMrXCaught(nextState)) {
                         double value = ScoreGenerator.scoreState(nextState);
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                         parent.add(bottom);
-                        
-                        //System.out.println(move + " : " + value);
-                        //System.out.println(value);
-                        //System.out.println();
-                        
-                        if(parent.isMaximiser()) {
-                            if(parent.getAlpha() < value) {
-                                parent.setAlpha(value);
-                                parent.setValue(value);
-                            }
-                        }
-                        else {
-                            if(parent.getBeta() > value) {
-                                parent.setBeta(value);
-                                parent.setValue(value);
-                                if(value == 0)
-                                    break;
-                            }
-                        }
+                        updateAlphaBeta(bottom);
                     }
                     else {
                         NodeTree child = parent.add(move, parent.getAlpha(), parent.getBeta(), nextState.getCurrentPlayer().colour());
-                        generateNextStates(child, nextState, depth - 1);
-                        
-                        if(parent.isMaximiser()) {
-                            if(child.getValue() > parent.getAlpha())
-                                parent.setAlpha(child.getValue());
-                        }
-                        else {
-                            if(child.getValue() < parent.getBeta())
-                                parent.setBeta(child.getValue());
-                        }
+                        generateNextStates(child, nextState, depth - 1, indent + 1);
+                        updateAlphaBeta(child);
                         
                     }
-                    
-                    double value = parent.isMaximiser() ? parent.getAlpha() : parent.getBeta();
-                    parent.setValue(value);
-                    
-                    //System.out.println((SEARCH_DEPTH - depth + 1) + " : " + parent.getMove());
-                    //System.out.println(move + " : " + value);
-                    //System.out.println("Alpha: " + parent.getAlpha());
-                    //System.out.println("Beta: " + parent.getBeta());
-                    //System.out.println();
-                    //System.out.println();
-                    
+
                 }
                                                               
+            }
+            
+            private void recalculateValues() {
+                root.resetTree();
+                reverseIterateTree(new HashSet<>(root.getBottomNodes()));
+            }
+            
+            private void reverseIterateTree(Set<NodeTree> treeRow) {
+                
+                Set<NodeTree> parents = new HashSet<>();
+                for(NodeTree b : treeRow) {
+                    if(b.getParent() != null) {
+                        updateAlphaBeta(b);
+                        parents.add(b.getParent());
+                    }
+                }
+                
+                if(!parents.isEmpty())
+                    reverseIterateTree(parents);
+            }
+            
+            private void updateAlphaBeta(NodeTree t) {
+                NodeTree parent = t.getParent();
+                if(parent == null)
+                    return;
+                if(parent.isMaximiser()) {
+                    if(parent.getAlpha() < t.getValue()) {
+                        parent.setAlpha(t.getValue());
+                        parent.setValue(t.getValue());
+                    }
+                }
+                else {
+                    if(parent.getBeta() > t.getValue()) {
+                        parent.setBeta(t.getValue());
+                        parent.setValue(t.getValue());
+                    }
+                }
             }
 
             private boolean useDouble(GameState state) {
                 int currentRound = state.getCurrentRound();
-                boolean currRoundIsReveal = GameState.getRounds().get(currentRound) ;
+                boolean currRoundIsReveal = currentRound < GameState.getRounds().size() && GameState.getRounds().get(currentRound);
                 boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
                 double score = ScoreGenerator.scoreState(state);
                 return ((currRoundIsReveal || lastRoundIsReveal) && inDanger(score, true)) || inDanger(score, false);

@@ -54,6 +54,15 @@ public class NodeTree {
         children.add(t);
     }
     
+    public void resetTree() {
+        if(!children.isEmpty()) {
+            this.value = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+            this.alpha = Double.NEGATIVE_INFINITY;
+            this.beta = Double.POSITIVE_INFINITY;
+            children.forEach(c -> c.resetTree());
+        }
+    }
+    
     public void setParent(NodeTree parent) {
         this.parent = parent;
     }

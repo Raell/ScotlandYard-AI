@@ -66,7 +66,10 @@ public class ScoreGenerator {
         }
         System.out.println("Chosen: " + selected.toString() + "\n");
         return selected;*/
-        
+        System.out.println("Root: " + root.getValue());
+        for(NodeTree c : root.getChildren()) {
+            System.out.println(c.getValue());              
+        }
         return root.getChildren()
                 .stream()
                 .filter(c -> c.getValue() == root.getValue())
@@ -121,7 +124,7 @@ public class ScoreGenerator {
     private static double availableMovesFactor(GameState g) {
         Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false, true);
         int moveCount = validmoves.size();       
-        return (moveCount <= 10) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
+        return (moveCount <= 5) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
     }
     
     private static double contextualFactor(GameState g) {
@@ -132,7 +135,7 @@ public class ScoreGenerator {
             Set<Integer> possiblePos = new HashSet<>();
             updatePositions(possiblePos, ticketsUsed, start);
 
-            return (possiblePos.size() <= 2) ? ((possiblePos.size() == 1) ? 0.2 : 0.5) : 1;
+            return (possiblePos.size() <= 2) ? ((possiblePos.size() == 1) ? 0.5 : 0.8) : 1;
         }
         else
             return 1;

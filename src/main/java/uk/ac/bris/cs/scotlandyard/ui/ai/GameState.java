@@ -214,7 +214,7 @@ public class GameState {
         
         if(move.colour().isMrX()) {
             nextState.currentRound++;
-            if(rounds.get(nextState.currentRound - 1)) {
+            if(nextState.currentRound - 1 != rounds.size() && rounds.get(nextState.currentRound - 1)) {
                 nextState.setLastKnownPos(move.destination());
                 nextState.ticketsSinceLastKnown.clear();
             }
