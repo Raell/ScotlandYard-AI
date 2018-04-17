@@ -71,6 +71,7 @@ public class GameTree extends NodeTree {
         }
     }
     
+    @Override
     public String toString() {
         return GameState.getCurrentPlayer().colour() + ": " + GameState.getCurrentPlayer().location();
     }

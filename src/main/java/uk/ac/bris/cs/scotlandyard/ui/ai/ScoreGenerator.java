@@ -5,23 +5,17 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
-import uk.ac.bris.cs.scotlandyard.model.PassMove;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
 import uk.ac.bris.cs.scotlandyard.model.Transport;
@@ -40,36 +34,7 @@ public class ScoreGenerator {
         ScoreGenerator.initMrXTickets = initMrXTickets;
     }
     
-    /*@Override
-    public void visit(GameTree tree) {        
-        //Visit bottomn nodes and use score function on the game state
-        //List<Ticket> t = new ArrayList<>(Arrays.asList(Ticket.TAXI, Ticket.BUS));
-        //Set<Integer> r = testContextualFactor(128, t);
-        //System.out.println(r);
-        
-        tree.getBottomNodes().forEach(t -> {
-            t.setValue(scoreState(t.getState()));
-        });
-        minimaxUpdate(tree);
-    }*/
-    
     public static Move selectMove(GameTree root) {
-        /*Double value = Double.NEGATIVE_INFINITY;
-        Move selected = root.getMove();
-        for(NodeTree child : root.getChildren()){
-            if(child.getValue() > value) {
-                selected = child.getMove();
-                value = child.getValue();
-            }
-                
-            System.out.println("Possible: " + child.getMove().toString() + " : " + child.getValue());
-        }
-        System.out.println("Chosen: " + selected.toString() + "\n");
-        return selected;*/
-        System.out.println("Root: " + root.getValue());
-        for(NodeTree c : root.getChildren()) {
-            System.out.println(c.getValue());              
-        }
         return root.getChildren()
                 .stream()
                 .filter(c -> c.getValue() == root.getValue())
@@ -155,33 +120,22 @@ public class ScoreGenerator {
         return factor;
     }
     
-    /*private Set<Integer> testContextualFactor(int lastKnownPos, List<Ticket> ticketsUsed) {
-        Node<Integer> start = graph.getNode(lastKnownPos);
-        Set<Integer> possiblePos = new HashSet<>();
-        updatePositions(possiblePos, ticketsUsed, start);
-        return possiblePos;
-    }*/
-    
     private static void updatePositions(Set<Integer> possiblePos, List<Ticket> path, Node<Integer> nextNode) {
         if(path.isEmpty())
             possiblePos.add(nextNode.value());
         
         else {
             Ticket t = path.get(0);
-            for(Edge<Integer, Transport> e : graph.getEdgesFrom(nextNode)) {              
-                if(Ticket.fromTransport(e.data()) == t) {
-                    List<Ticket> nextPath = new LinkedList<>(path.subList(1, path.size()));
-                    updatePositions(possiblePos, nextPath, e.destination());
-                }
-            }
+            graph.getEdgesFrom(nextNode).stream().filter((e) -> (Ticket.fromTransport(e.data()) == t)).forEachOrdered((e) -> {
+                List<Ticket> nextPath = new LinkedList<>(path.subList(1, path.size()));
+                updatePositions(possiblePos, nextPath, e.destination());
+            });
         }
     }
     
     private static double getDistanceValue(DirectedGraph<Integer, Double> path) {
         double value = 0;
-        for(Edge<Integer, Double> e : path.getEdges()) {
-            value += e.data();
-        }
+        value = path.getEdges().stream().map((e) -> e.data()).reduce(value, (accumulator, _item) -> accumulator + _item);
         return value * Math.pow(path.getEdges().size(), 2);
     }
     

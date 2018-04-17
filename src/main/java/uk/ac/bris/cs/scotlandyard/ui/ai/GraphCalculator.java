@@ -89,13 +89,12 @@ public abstract class GraphCalculator {
                                     Graph<Integer, Double> ourResult) {
         
         // consider neighbours of current node (others can't gain from update)
-        for(Edge<Integer, Transport> e : graph.getEdgesFrom(currentNode)) {
+        graph.getEdgesFrom(currentNode).forEach((e) -> {
             Node<Integer> neighbour = e.destination();
             WeightedNode<Integer> wNeighbour = weightedNodeMap.get(neighbour);
             WeightedNode<Integer> wCurrent = weightedNodeMap.get(currentNode);
-            
             // only update unvisited nodes (others already have shortest connection)
-            if(unvisited.contains(wNeighbour) && e.data() != Transport.FERRY && wCurrent.getTicketsCount(Ticket.fromTransport(e.data())) > 0 ){
+            if (unvisited.contains(wNeighbour) && e.data() != Transport.FERRY && wCurrent.getTicketsCount(Ticket.fromTransport(e.data())) > 0) {
                 // get current distance of neighbour before
                 Double distance = wNeighbour.getWeight();
                 Double dScaled = (distance != Double.POSITIVE_INFINITY) ? (distance * Math.pow(wNeighbour.getMoves(), 2)) : Double.POSITIVE_INFINITY;
@@ -103,10 +102,8 @@ public abstract class GraphCalculator {
                 // currentNode  (here simplified version with fixed 1.0 for all direct edge weights)
                 Double ticketCount = (double) wCurrent.getTicketsCount(Ticket.fromTransport(e.data()));
                 Double transportWeight = (ticketCount != 0) ? totalTickets / ticketCount : Double.POSITIVE_INFINITY;
-
                 Double possibleUpdate = update(distance, wCurrent.getWeight(), transportWeight);//* Math.pow(weightedNodeMap.get(currentNode).getMoves() + 1, 1);             
                 Double PUScaled = possibleUpdate * Math.pow(wCurrent.getMoves() + 1, 2);
-                
                 // implement update only if beneficial
                 if (dScaled > PUScaled) {
                     int newTaxiCount = (e.data() == Transport.TAXI) ? wCurrent.getTicketsCount(Ticket.TAXI) - 1 : wCurrent.getTicketsCount(Ticket.TAXI);
@@ -119,8 +116,8 @@ public abstract class GraphCalculator {
                     wNeighbour.setTickets(newTaxiCount, newBusCount, newUndergroundCount);
                     unvisited.add(wNeighbour);
                     ourResult.addEdge(new Edge<>(neighbour, currentNode, transportWeight));
-                } 
-            } 
-        } 
+                }
+            }
+        }); 
     } 
 } 

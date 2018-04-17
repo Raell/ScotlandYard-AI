@@ -34,7 +34,7 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 3;
+    private static final int SEARCH_DEPTH = 6;
     private static final double DANGER_SCORE = 20.0;
     
     // TODO create a new player here
@@ -118,7 +118,7 @@ public class Athena implements PlayerFactory {
                 
                 Move move = ScoreGenerator.selectMove(root);
                 changeRoot(move);
-                displayMrXMove(move, location);              
+                //displayMrXMove(move, location);              
                 callback.accept(move);
 
             }
@@ -167,23 +167,24 @@ public class Athena implements PlayerFactory {
                 ScotlandYardPlayer player = state.getCurrentPlayer();             
                 Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), useDouble(state), false);
                 
+                //final long check1 = System.currentTimeMillis();
+                //System.out.println("State/Valid: " + (double) (check1 - startTime) / 1000 + " secs");
+                
                 for(Move move : validmoves) {
                     if(parent.getAlpha() >= parent.getBeta())
                         break;
                     
-                    GameState nextState = state.nextState(move);;
-                    
+                    GameState nextState = state.nextState(move);                   
                     if(depth == 1 || isMrXCaught(nextState)) {
                         double value = ScoreGenerator.scoreState(nextState);
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
-                        parent.add(bottom);
+                        parent.add(bottom);                    
                         updateAlphaBeta(bottom);
                     }
                     else {
                         NodeTree child = parent.add(move, parent.getAlpha(), parent.getBeta(), nextState.getCurrentPlayer().colour());
                         generateNextStates(child, nextState, depth - 1, indent + 1);
                         updateAlphaBeta(child);
-                        
                     }
 
                 }
@@ -198,12 +199,12 @@ public class Athena implements PlayerFactory {
             private void reverseIterateTree(Set<NodeTree> treeRow) {
                 
                 Set<NodeTree> parents = new HashSet<>();
-                for(NodeTree b : treeRow) {
-                    if(b.getParent() != null) {
-                        updateAlphaBeta(b);
-                        parents.add(b.getParent());
-                    }
-                }
+                treeRow.stream().filter((b) -> (b.getParent() != null)).map((b) -> {
+                    updateAlphaBeta(b);
+                    return b;
+                }).forEachOrdered((b) -> {
+                    parents.add(b.getParent());
+                });
                 
                 if(!parents.isEmpty())
                     reverseIterateTree(parents);

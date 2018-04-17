@@ -115,19 +115,6 @@ public class NodeTree {
         return move;
     }
     
-    /*public List<NodeTree> getBottomNodes() {
-        List<NodeTree> list = new ArrayList<>();
-        
-        if(getHeight() == 0)
-            list.add((GameTree) this);                
-        else {
-            children.forEach((c) -> {
-                list.addAll(c.getBottomNodes());
-            });
-        }
-        return list;
-    }*/
-    
     public void setValue(double value) {
         this.value = value;
     }
@@ -135,10 +122,5 @@ public class NodeTree {
     public double getValue() {
         return value;
     }
-    
-    //Visitor to score bottom nodes and uses minimax to generate path
-    /*public void accept(Visitor v) {
-        v.visit(this);
-    }*/
     
 }
