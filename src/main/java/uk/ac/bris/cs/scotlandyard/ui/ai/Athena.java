@@ -34,7 +34,7 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 6;
+    private static final int SEARCH_DEPTH = 4;
     private static final double DANGER_SCORE = 20.0;
     
     // TODO create a new player here
@@ -98,8 +98,6 @@ public class Athena implements PlayerFactory {
             public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
                             Consumer<Move> callback) {
                 
-                //final long startTime = System.currentTimeMillis();
-                
                 if(rebuildTree) {
                     initialMove(view, location);
                 }
@@ -108,13 +106,11 @@ public class Athena implements PlayerFactory {
                     int depth = SEARCH_DEPTH - root.getHeight();
                     root.getBottomNodes().forEach((b) -> {                    
                         generateNextStates(b, b.getState(), depth, 0);
-                        b.toNodeTree();
+                        if(b != root)
+                            b.toNodeTree();
                     });
                     recalculateValues();
                 }
-                
-                //final long endTime = System.currentTimeMillis();
-                //System.out.println("Execution Time: " + (double) (endTime - startTime) / 1000 + " secs");
                 
                 Move move = ScoreGenerator.selectMove(root);
                 changeRoot(move);
@@ -196,15 +192,14 @@ public class Athena implements PlayerFactory {
                 reverseIterateTree(new HashSet<>(root.getBottomNodes()));
             }
             
-            private void reverseIterateTree(Set<NodeTree> treeRow) {
-                
+            private void reverseIterateTree(Set<NodeTree> treeRow) {                
                 Set<NodeTree> parents = new HashSet<>();
-                treeRow.stream().filter((b) -> (b.getParent() != null)).map((b) -> {
-                    updateAlphaBeta(b);
-                    return b;
-                }).forEachOrdered((b) -> {
-                    parents.add(b.getParent());
-                });
+                for(NodeTree b : treeRow) {
+                    if(b.getParent() != null) {
+                        updateAlphaBeta(b);
+                        parents.add(b.getParent());
+                    }
+                }
                 
                 if(!parents.isEmpty())
                     reverseIterateTree(parents);
