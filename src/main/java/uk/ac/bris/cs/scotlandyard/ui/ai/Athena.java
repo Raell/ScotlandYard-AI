@@ -21,6 +21,7 @@ import uk.ac.bris.cs.scotlandyard.ai.Visualiser;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.DoubleMove;
 import uk.ac.bris.cs.scotlandyard.model.Move;
+import uk.ac.bris.cs.scotlandyard.model.PassMove;
 import uk.ac.bris.cs.scotlandyard.model.Player;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardView;
@@ -34,8 +35,10 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 4;
+    private static final int SEARCH_DEPTH = 6;
     private static final double DANGER_SCORE = 20.0;
+    
+    public static List<Long> scoreTimes = new ArrayList<>();
     
     // TODO create a new player here
     @Override
@@ -82,12 +85,14 @@ public class Athena implements PlayerFactory {
     private static class MyPlayer implements Player {
 
             //private final Random random = new Random();
-            private final Map<Colour,Map<Ticket, Integer>> initTickets = new HashMap<>();
+            private final Map<Colour, Map<Ticket, Integer>> initTickets = new HashMap<>();
             private Visualiser visualiser;
             private ResourceProvider provider;
             private GameTree root;
             //private boolean restrictSpecial;
             private boolean rebuildTree = true;
+            
+            private List<Long> validMoveTimes = new ArrayList<>();
             
             public void updateVisualiserAndProvider(Visualiser visualiser, ResourceProvider provider) {
                 this.visualiser = visualiser;
@@ -98,6 +103,8 @@ public class Athena implements PlayerFactory {
             public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
                             Consumer<Move> callback) {
                 
+                final long start = System.nanoTime();
+                
                 if(rebuildTree) {
                     initialMove(view, location);
                 }
@@ -105,7 +112,7 @@ public class Athena implements PlayerFactory {
                     //Generate new states
                     int depth = SEARCH_DEPTH - root.getHeight();
                     root.getBottomNodes().forEach((b) -> {                    
-                        generateNextStates(b, b.getState(), depth, 0);
+                        generateNextStates(b, b.getState(), depth);
                         if(b != root)
                             b.toNodeTree();
                     });
@@ -113,8 +120,27 @@ public class Athena implements PlayerFactory {
                 }
                 
                 Move move = ScoreGenerator.selectMove(root);
+                 
+                
+                final long end = System.nanoTime();
+                
+                //double avgValid = validMoveTimes.stream().mapToLong(val -> val).average().getAsDouble();
+                //System.out.println("Valid Avg: " + (avgValid/1000000) + " millisecs");
+                
+                /*double avgScore = scoreTimes.stream().mapToLong(val -> val).average().getAsDouble();
+                System.out.println("Score Avg: " + (avgScore/1000000) + " millisecs");
+                
+                //long totalValid = validMoveTimes.stream().mapToLong(val -> val).sum();
+                //System.out.println("Valid Total: " + ((double)totalValid/1000000000) + " secs, called " + validMoveTimes.size() + " times");
+                
+                long totalScore = scoreTimes.stream().mapToLong(val -> val).sum();
+                System.out.println("Score Total: " + ((double)totalScore/1000000000) + " secs, called " + scoreTimes.size() + " times, Bottom: " + countV);
+                
+                System.out.println("Bottom Size: " + root.getBottomNodes().size());
+                System.out.println("Total: " + (double) (end - start) / 1000000000 + " secs");*/
+                
                 changeRoot(move);
-                //displayMrXMove(move, location);              
+                //displayMrXMove(move, location);           
                 callback.accept(move);
 
             }
@@ -133,7 +159,8 @@ public class Athena implements PlayerFactory {
             
             private void initialize(ScotlandYardView view, GameState state) {
                 state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
-                ScoreGenerator.initialize(view.getGraph(), initTickets.get(Colour.BLACK));
+                ScoreGenerator.initialise(view.getGraph(), initTickets);
+                preProcessPrim(state.getPlayerLocation(Colour.BLACK));
             }
             
             private void initialMove(ScotlandYardView view, int location) {
@@ -151,40 +178,43 @@ public class Athena implements PlayerFactory {
                 //System.out.println(ScoreVisitor.scoreState(state));
                 
                 //restrictSpecial = !(view.getRounds().get(state.getCurrentRound()) || ScoreVisitor.scoreState(state) <= DANGER_SCORE);
-                generateNextStates(root, state, SEARCH_DEPTH, 0);
+                generateNextStates(root, state, SEARCH_DEPTH);
                 rebuildTree = false;
             }
             
-            private void generateNextStates(NodeTree parent, GameState state, int depth, int indent) {
-                //final long startTime = System.currentTimeMillis();
-                if(depth <= 0)
+            private void generateNextStates(NodeTree parent, GameState state, int depth) {
+                
+                if(depth <= 0 || parent.getAlpha() >= parent.getBeta())
                     return;
                 
+                //final long s = System.nanoTime();
+
                 ScotlandYardPlayer player = state.getCurrentPlayer();             
                 Set<Move> validmoves = ValidMoves.validMoves(player, state.getPlayerLocation(player.colour()), state.getCurrentRound(), state.getDetectives(), useDouble(state), false);
                 
-                //final long check1 = System.currentTimeMillis();
-                //System.out.println("State/Valid: " + (double) (check1 - startTime) / 1000 + " secs");
+                //final long e = System.nanoTime();
+                //validMoveTimes.add(e - s);
+                //System.out.println("Valid: " + (double) (e - s) / 1000000 + " millisecs");
                 
-                for(Move move : validmoves) {
-                    if(parent.getAlpha() >= parent.getBeta())
-                        break;
-                    
-                    GameState nextState = state.nextState(move);                   
-                    if(depth == 1 || isMrXCaught(nextState)) {
+                for(Move move : validmoves) {                  
+                    GameState nextState = state.nextState(move);
+                    if(move.colour().isMrX())
+                        preProcessPrim(nextState.getPlayerLocation(Colour.BLACK));
+                    if(depth == 1 || isMrXCaught(nextState.getPlayerLocation(Colour.BLACK), move)) {
+                        
                         double value = ScoreGenerator.scoreState(nextState);
+                        
                         GameTree bottom = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                         parent.add(bottom);                    
                         updateAlphaBeta(bottom);
                     }
                     else {
                         NodeTree child = parent.add(move, parent.getAlpha(), parent.getBeta(), nextState.getCurrentPlayer().colour());
-                        generateNextStates(child, nextState, depth - 1, indent + 1);
+                        generateNextStates(child, nextState, depth - 1);
                         updateAlphaBeta(child);
                     }
 
-                }
-                                                              
+                }                                            
             }
             
             private void recalculateValues() {
@@ -224,6 +254,8 @@ public class Athena implements PlayerFactory {
             }
 
             private boolean useDouble(GameState state) {
+                if(state.getCurrentPlayer().isDetective())
+                    return false;
                 int currentRound = state.getCurrentRound();
                 boolean currRoundIsReveal = currentRound < GameState.getRounds().size() && GameState.getRounds().get(currentRound);
                 boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
@@ -236,11 +268,13 @@ public class Athena implements PlayerFactory {
                 return score <= danger;
             }
             
-            private boolean isMrXCaught(GameState g) {
-                int mrXPos = g.getPlayerLocation(Colour.BLACK);
-                return g.getDetectives()
-                        .stream()
-                        .anyMatch(d -> d.location() == mrXPos);
+            private boolean isMrXCaught(int mrXLocation, Move move) {
+                if(move.colour().isMrX() || move.getClass() == PassMove.class)
+                    return false;
+                else {
+                    TicketMove tMove = (TicketMove) move;
+                    return tMove.destination() == mrXLocation;
+                }
             }
             
             private void displayMrXMove(Move move, int location) {
@@ -277,6 +311,10 @@ public class Athena implements PlayerFactory {
                     }
                 });
             }
+
+        private void preProcessPrim(int mrXLocation) {
+            ScoreGenerator.preProcessPrim(mrXLocation);
+        }
             
             
     }

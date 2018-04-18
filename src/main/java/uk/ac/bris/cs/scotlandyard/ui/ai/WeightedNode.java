@@ -39,7 +39,7 @@ public class WeightedNode<X> implements Comparable<WeightedNode<X>> {
         this.tickets = new HashMap<>();
     }
     
-    public void setTickets(int taxiCount, int busCount, int undergroundCount) {
+    /*public void setTickets(int taxiCount, int busCount, int undergroundCount) {
         tickets.put(Ticket.TAXI, taxiCount);
         tickets.put(Ticket.BUS, busCount);
         tickets.put(Ticket.UNDERGROUND, undergroundCount);
@@ -47,7 +47,7 @@ public class WeightedNode<X> implements Comparable<WeightedNode<X>> {
     
     public int getTicketsCount(Ticket t) {
         return tickets.containsKey(t) ? tickets.get(t) : 0;
-    }
+    }*/
 
     public X value() {
         return node.value();

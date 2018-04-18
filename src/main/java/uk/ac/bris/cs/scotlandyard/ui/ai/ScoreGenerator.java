@@ -7,6 +7,7 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,10 +29,36 @@ public class ScoreGenerator {
     //private Move selectedMove;
     private static Graph<Integer, Transport> graph;
     private static Map<Ticket, Integer> initMrXTickets;
+    //private static Map<Colour, Map<Ticket, Integer>> initTickets;
+    private static final Map<Colour, DijkstraCalculator> dijkstraMap = new HashMap<>();
+    private static final Map<Colour, DirectedGraph<Integer, Double>> primGraph = new HashMap<>();
     
     public static void initialize(Graph<Integer, Transport> graph, Map<Ticket, Integer> initMrXTickets) {
         ScoreGenerator.graph = graph;
         ScoreGenerator.initMrXTickets = initMrXTickets;
+        
+    }
+    
+    public static void initialise(Graph<Integer, Transport> graph, Map<Colour, Map<Ticket, Integer>> initTickets) {
+        ScoreGenerator.graph = graph;
+        ScoreGenerator.initMrXTickets = initTickets.get(Colour.BLACK);
+        //ScoreGenerator.initTickets = initTickets;
+        
+        for(Colour c : initTickets.keySet()) {
+            if(c.isMrX())
+                continue;
+            DijkstraCalculator dCal = new DijkstraCalculator(graph, initTickets.get(c));
+            dijkstraMap.put(c, dCal);            
+        }
+        
+    }
+    
+    public static void preProcessPrim(int mrXLocation) {
+        for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
+            Colour c = entry.getKey();
+            DijkstraCalculator d = entry.getValue();
+            primGraph.put(c, d.getResult(mrXLocation));
+        }
     }
     
     public static Move selectMove(GameTree root) {
@@ -45,6 +72,36 @@ public class ScoreGenerator {
     }
     
     public static double scoreState(GameState g) {
+        //TODO Run Dijkstra algorithm on each detecetive to get distance
+        //DijkstraCalculator d = new DijkstraCalculator(graph);
+        //final long start = System.nanoTime();
+        List<Double> distanceScore = new ArrayList<>();
+        
+        
+        
+        for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
+            Colour c = entry.getKey();
+            DijkstraCalculator d = entry.getValue();
+            Double distance = d.getResult(primGraph.get(c), g.getPlayerLocation(c));
+            if(distance == 0)
+                return 0;
+            distanceScore.add(distance);
+        }
+        
+        //System.out.println("Distance: " + (double) (end - start) / 1000000 + " millisecs");
+        
+        double score = calculateDistanceScore(distanceScore);
+        score *= availableMovesFactor(g);
+        score *= contextualFactor(g);
+        score *= specialTicketsFactor(g);
+        
+        //final long end = System.nanoTime();
+        //Athena.scoreTimes.add(end - start);
+        return score;        
+        
+    }
+    
+    /*public static double scoreState(GameState g) {
         //TODO Run Dijkstra algorithm on each detecetive to get distance
         //DijkstraCalculator d = new DijkstraCalculator(graph);
         List<Double> distanceScore = new ArrayList<>();
@@ -72,15 +129,15 @@ public class ScoreGenerator {
             score *= specialTicketsFactor(g);
             return score;        
         }
-    }
+    }*/
     
-    private static double calculateDistanceScore(List<Double> distances, int detectiveCount) {
+    private static double calculateDistanceScore(List<Double> distances) {
         Collections.sort(distances);
         double score = 0;
         
         int size = distances.size();
         for(int i = 0; i < size; i++) {
-            score += distances.get(i) * ((detectiveCount - i) / size);
+            score += distances.get(i) * ((size - i) / size);
         }
         
         return score;
@@ -133,10 +190,10 @@ public class ScoreGenerator {
         }
     }
     
-    private static double getDistanceValue(DirectedGraph<Integer, Double> path) {
+    /*private static double getDistanceValue(DirectedGraph<Integer, Double> path) {
         double value = 0;
         value = path.getEdges().stream().map((e) -> e.data()).reduce(value, (accumulator, _item) -> accumulator + _item);
         return value * Math.pow(path.getEdges().size(), 2);
-    }
+    }*/
     
 }

@@ -62,7 +62,7 @@ public abstract class GraphCalculator {
             } 
             else {
                 wNode.setWeight(0.0);
-                wNode.setTickets(tickets.get(Ticket.TAXI), tickets.get(Ticket.BUS), tickets.get(Ticket.UNDERGROUND));
+                //wNode.setTickets(tickets.get(Ticket.TAXI), tickets.get(Ticket.BUS), tickets.get(Ticket.UNDERGROUND));
             }
         }
         
@@ -94,26 +94,29 @@ public abstract class GraphCalculator {
             WeightedNode<Integer> wNeighbour = weightedNodeMap.get(neighbour);
             WeightedNode<Integer> wCurrent = weightedNodeMap.get(currentNode);
             // only update unvisited nodes (others already have shortest connection)
-            if (unvisited.contains(wNeighbour) && e.data() != Transport.FERRY && wCurrent.getTicketsCount(Ticket.fromTransport(e.data())) > 0) {
+            if (unvisited.contains(wNeighbour) && e.data() != Transport.FERRY) {// && wCurrent.getTicketsCount(Ticket.fromTransport(e.data())) > 0) {
                 // get current distance of neighbour before
                 Double distance = wNeighbour.getWeight();
                 Double dScaled = (distance != Double.POSITIVE_INFINITY) ? (distance * Math.pow(wNeighbour.getMoves(), 2)) : Double.POSITIVE_INFINITY;
                 // get possible distance of neighbour AFTER considering 'newly added'
                 // currentNode  (here simplified version with fixed 1.0 for all direct edge weights)
-                Double ticketCount = (double) wCurrent.getTicketsCount(Ticket.fromTransport(e.data()));
-                Double transportWeight = (ticketCount != 0) ? totalTickets / ticketCount : Double.POSITIVE_INFINITY;
+                
+                //Double ticketCount = (double) wCurrent.getTicketsCount(Ticket.fromTransport(e.data()));
+                //Double transportWeight = (ticketCount != 0) ? totalTickets / ticketCount : Double.POSITIVE_INFINITY;
+                Double transportWeight = (double) totalTickets / tickets.get(Ticket.fromTransport(e.data()));
+                
                 Double possibleUpdate = update(distance, wCurrent.getWeight(), transportWeight);//* Math.pow(weightedNodeMap.get(currentNode).getMoves() + 1, 1);             
                 Double PUScaled = possibleUpdate * Math.pow(wCurrent.getMoves() + 1, 2);
                 // implement update only if beneficial
                 if (dScaled > PUScaled) {
-                    int newTaxiCount = (e.data() == Transport.TAXI) ? wCurrent.getTicketsCount(Ticket.TAXI) - 1 : wCurrent.getTicketsCount(Ticket.TAXI);
-                    int newBusCount = (e.data() == Transport.BUS) ? wCurrent.getTicketsCount(Ticket.BUS) - 1 : wCurrent.getTicketsCount(Ticket.BUS);
-                    int newUndergroundCount = (e.data() == Transport.UNDERGROUND) ? wCurrent.getTicketsCount(Ticket.UNDERGROUND) - 1 : wCurrent.getTicketsCount(Ticket.UNDERGROUND);
+                    //int newTaxiCount = (e.data() == Transport.TAXI) ? wCurrent.getTicketsCount(Ticket.TAXI) - 1 : wCurrent.getTicketsCount(Ticket.TAXI);
+                    //int newBusCount = (e.data() == Transport.BUS) ? wCurrent.getTicketsCount(Ticket.BUS) - 1 : wCurrent.getTicketsCount(Ticket.BUS);
+                    //int newUndergroundCount = (e.data() == Transport.UNDERGROUND) ? wCurrent.getTicketsCount(Ticket.UNDERGROUND) - 1 : wCurrent.getTicketsCount(Ticket.UNDERGROUND);
                     
                     unvisited.remove(wNeighbour);
                     wNeighbour.setWeight(possibleUpdate);
                     wNeighbour.setMoves(wCurrent.getMoves() + 1);
-                    wNeighbour.setTickets(newTaxiCount, newBusCount, newUndergroundCount);
+                    //wNeighbour.setTickets(newTaxiCount, newBusCount, newUndergroundCount);
                     unvisited.add(wNeighbour);
                     ourResult.addEdge(new Edge<>(neighbour, currentNode, transportWeight));
                 }

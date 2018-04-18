@@ -36,8 +36,8 @@ public class ValidMoves{
     }
     
     //checks whether a player has enough tickets to make the move
-    private static boolean hasValidTicket(ScotlandYardPlayer player, TicketMove move) {      
-        return player.hasTickets(move.ticket());
+    private static boolean hasValidTicket(ScotlandYardPlayer player, Ticket t) {      
+        return player.hasTickets(t);
     }
 
     //checks whether a player has enough tickets to make the move
@@ -60,11 +60,19 @@ public class ValidMoves{
 
         //creates the ticket moves
         fromEdges.forEach((edge) -> {
-            Ticket ticket = secret ? Ticket.SECRET : Ticket.fromTransport(edge.data());
-            TicketMove move = new TicketMove(player.colour(), ticket, edge.destination().value());
-            if (detectives.stream().noneMatch(p -> p.location() == edge.destination().value())
-                    && hasValidTicket(player, move))
-                moves.add(move);
+            //Ticket ticket = secret ? Ticket.SECRET : Ticket.fromTransport(edge.data());
+            //TicketMove move = new TicketMove(player.colour(), ticket, edge.destination().value());
+            if (detectives.stream().noneMatch(p -> p.location() == edge.destination().value())) {               
+                Ticket ticket = Ticket.fromTransport(edge.data());
+               
+                if(hasValidTicket(player, ticket))
+                    moves.add(new TicketMove(player.colour(), ticket, edge.destination().value()));
+                
+                if(secret && hasValidTicket(player, Ticket.SECRET)) {
+                    moves.add(new TicketMove(player.colour(), Ticket.SECRET, edge.destination().value()));
+                }
+                
+            }
         });
 
         return moves;
@@ -80,9 +88,10 @@ public class ValidMoves{
         if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
             tMoves.forEach((firstMove) -> {
                 //get the ticket moves from each of the first moves' destinations
-                Set<TicketMove> secondMoves = possibleStandardMoves(player, firstMove.destination(), false, detectives);
-                if(useSecret(player, currentRound + 1, location))
-                    secondMoves.addAll(possibleStandardMoves(player, firstMove.destination(), true, detectives));
+                Set<TicketMove> secondMoves = (useSecret(currentRound + 1)) ? 
+                        possibleStandardMoves(player, firstMove.destination(), true, detectives) :
+                        possibleStandardMoves(player, firstMove.destination(), false, detectives);
+
 
                 //creates the double moves
                 for(TicketMove secondMove : secondMoves) {
@@ -103,11 +112,12 @@ public class ValidMoves{
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
-        tMoves.addAll(possibleStandardMoves(player, location, false, detectives));
-        
-        
-        if(!scoreChecking && useSecret(player, currentRound, location)){              
+             
+        if(!scoreChecking && useSecret(currentRound)){              
             tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
+        }
+        else {
+            tMoves.addAll(possibleStandardMoves(player, location, false, detectives)); 
         }
 
         moves.addAll(tMoves);
@@ -138,28 +148,8 @@ public class ValidMoves{
         return moves;
     }
     
-    private static boolean useSecret(ScotlandYardPlayer player, int currentRound, int location) {
-        
-        Node<Integer> locNode = graph.getNode(location);        
-        Collection<Edge<Integer, Transport>> fromEdges = graph.getEdgesFrom(locNode);
-        Collection<Transport> transports = new HashSet<>(Arrays.asList(Transport.values()));
-        
-        int transportCount = 0;
-        boolean multipleTransportAvailable = false;
-        
-        for(Edge<Integer, Transport> e : fromEdges) {                    
-            if(transports.contains(e.data())) {               
-                transportCount++;
-                
-                if(transportCount > 1) {
-                    multipleTransportAvailable = true;
-                    break;
-                }               
-                transports.remove(e.data());
-            }           
-        }      
-        
-        return currentRound == rounds.size() || (player.hasTickets(Ticket.SECRET) && !rounds.get(currentRound) && multipleTransportAvailable);
+    private static boolean useSecret(int currentRound) {          
+        return currentRound == rounds.size() || !rounds.get(currentRound);
     }
     
 }
