@@ -17,7 +17,6 @@ import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
-import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
 import uk.ac.bris.cs.scotlandyard.model.Transport;
 
@@ -31,15 +30,9 @@ public class ScoreGenerator {
     private static Map<Ticket, Integer> initMrXTickets;
     //private static Map<Colour, Map<Ticket, Integer>> initTickets;
     private static final Map<Colour, DijkstraCalculator> dijkstraMap = new HashMap<>();
-    private static final Map<Colour, DirectedGraph<Integer, Double>> primGraph = new HashMap<>();
-    
-    public static void initialize(Graph<Integer, Transport> graph, Map<Ticket, Integer> initMrXTickets) {
-        ScoreGenerator.graph = graph;
-        ScoreGenerator.initMrXTickets = initMrXTickets;
-        
-    }
-    
-    public static void initialise(Graph<Integer, Transport> graph, Map<Colour, Map<Ticket, Integer>> initTickets) {
+    private static final Map<Integer, Map<Colour, DirectedGraph<Integer, Double>>> primMap = new HashMap<>();
+       
+    public static void initialize(Graph<Integer, Transport> graph, Map<Colour, Map<Ticket, Integer>> initTickets) {
         ScoreGenerator.graph = graph;
         ScoreGenerator.initMrXTickets = initTickets.get(Colour.BLACK);
         //ScoreGenerator.initTickets = initTickets;
@@ -51,13 +44,29 @@ public class ScoreGenerator {
             dijkstraMap.put(c, dCal);            
         }
         
+        preProcessPrim();
+        
     }
     
-    public static void preProcessPrim(int mrXLocation) {
-        for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
+    private static void preProcessPrim() {
+        /*for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
             Colour c = entry.getKey();
             DijkstraCalculator d = entry.getValue();
             primGraph.put(c, d.getResult(mrXLocation));
+        }*/
+        
+        for(Node<Integer> n : graph.getNodes()) {
+            int location = n.value();
+            Map<Colour, DirectedGraph<Integer, Double>> primGraphs = new HashMap<>();
+            
+            for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
+                Colour c = entry.getKey();
+                DijkstraCalculator d = entry.getValue();
+                
+                primGraphs.put(c, d.getResult(location));
+            }
+            
+            primMap.put(location, primGraphs);
         }
     }
     
@@ -77,12 +86,13 @@ public class ScoreGenerator {
         //final long start = System.nanoTime();
         List<Double> distanceScore = new ArrayList<>();
         
+        int mrXLocation = g.getPlayerLocation(Colour.BLACK);
+        Map<Colour, DirectedGraph<Integer, Double>> primGraphs = primMap.get(mrXLocation);
         
-        
-        for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
+        for(Map.Entry<Colour, DirectedGraph<Integer, Double>> entry : primGraphs.entrySet()) {
             Colour c = entry.getKey();
-            DijkstraCalculator d = entry.getValue();
-            Double distance = d.getResult(primGraph.get(c), g.getPlayerLocation(c));
+            DijkstraCalculator d = dijkstraMap.get(c);
+            Double distance = d.getResult(entry.getValue(), g.getPlayerLocation(c));
             if(distance == 0)
                 return 0;
             distanceScore.add(distance);
@@ -144,7 +154,7 @@ public class ScoreGenerator {
     }
     
     private static double availableMovesFactor(GameState g) {
-        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false, true);
+        Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false, false);
         int moveCount = validmoves.size();       
         return (moveCount <= 5) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
     }

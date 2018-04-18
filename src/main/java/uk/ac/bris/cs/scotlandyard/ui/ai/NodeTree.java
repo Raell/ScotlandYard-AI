@@ -5,8 +5,8 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
@@ -24,13 +24,13 @@ public class NodeTree {
     private double beta;
     private final List<NodeTree> children;
     private NodeTree parent;
-    private Colour currentPlayer;
+    private final Colour currentPlayer;
     
     public NodeTree(double value, int playerCount, int depth, Move move, NodeTree parent, double alpha, double beta, Colour currentPlayer) {
         this.value = value;
         this.playerCount = playerCount;
         this.depth = depth;
-        this.children = new ArrayList<>();
+        this.children = new LinkedList<>();
         this.move = move;
         this.parent = parent;
         this.alpha = alpha;

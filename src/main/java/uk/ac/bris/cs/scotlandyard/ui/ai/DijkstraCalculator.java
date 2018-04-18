@@ -65,6 +65,7 @@ public class DijkstraCalculator extends GraphCalculator {
         Node<Integer> current = anyNodeToStart.getNode(destinationNodeID);  
         
         double value = 0;
+        double moves = 0;
 
         // trace route from end node to start node
         while (!anyNodeToStart.getEdgesFrom(current).isEmpty()) {
@@ -72,10 +73,10 @@ public class DijkstraCalculator extends GraphCalculator {
             Edge<Integer, Double> e = edges.get(edges.size() - 1);
             value += e.data();
             current = e.destination();
-
+            moves++;
         }
 
         // return path
-        return value;
+        return value * Math.pow(moves, 2);
     } 
 }

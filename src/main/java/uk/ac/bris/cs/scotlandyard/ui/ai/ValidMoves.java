@@ -30,7 +30,7 @@ public class ValidMoves{
     //private List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
-    public static void initialise(Graph<Integer, Transport> g, List<Boolean> r) {
+    public static void initialize(Graph<Integer, Transport> g, List<Boolean> r) {
         graph = g;
         rounds = r;
     }
@@ -80,15 +80,17 @@ public class ValidMoves{
     }
 
     //gets the possible double moves mrX can make
-    private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, int location, Set<TicketMove> tMoves,
+    private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, Set<TicketMove> tMoves,
             int currentRound, List<ScotlandYardPlayer> detectives){
         Set<Move> doublemoves = new HashSet<>();
 
         //adds the doublemoves
         if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
-            tMoves.forEach((firstMove) -> {
+            for(TicketMove firstMove :tMoves) {
+                if(firstMove.ticket() == Ticket.SECRET && !useSecretInDouble(currentRound + 1))
+                    continue;
                 //get the ticket moves from each of the first moves' destinations
-                Set<TicketMove> secondMoves = (useSecret(currentRound + 1)) ? 
+                Set<TicketMove> secondMoves = (useSecretInDouble(currentRound + 1)) ? 
                         possibleStandardMoves(player, firstMove.destination(), true, detectives) :
                         possibleStandardMoves(player, firstMove.destination(), false, detectives);
 
@@ -99,7 +101,7 @@ public class ValidMoves{
                     if(hasValidTicket(player, doublemove))
                         doublemoves.add(doublemove);
                 }
-            });
+            }
         }
         return doublemoves;
     }
@@ -107,13 +109,13 @@ public class ValidMoves{
     //returns the set of possible moves mrX can make
     private static Set<Move> mrXMoves(ScotlandYardPlayer player, int location, 
             int currentRound, List<ScotlandYardPlayer> detectives,
-            boolean doubleUsage, boolean scoreChecking) {
+            boolean doubleUsage, boolean useSecret) {
         Set<Move> moves = new HashSet<>();
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
              
-        if(!scoreChecking && useSecret(currentRound)){              
+        if(useSecret){              
             tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
         }
         else {
@@ -124,7 +126,7 @@ public class ValidMoves{
             
         if(doubleUsage) {
             //adds the double moves mrX can make
-            Set<Move> doublemoves = possibleDoubleMoves(player, location, tMoves, currentRound, detectives);
+            Set<Move> doublemoves = possibleDoubleMoves(player, tMoves, currentRound, detectives);
             moves.addAll(doublemoves);
         }
         
@@ -132,12 +134,12 @@ public class ValidMoves{
     }
 
     //returns the valid mvoes for the given player
-    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean doubleUsage, boolean scoreChecking) {
+    public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean doubleUsage, boolean useSecret) {
         Set<Move> moves = new HashSet<>();
         //if(!scoreChecking)
             //System.out.println("UseDouble: " + doubleUsage);
         if(player.isMrX())
-            moves.addAll(mrXMoves(player, location, currentRound, detectives, doubleUsage, scoreChecking));
+            moves.addAll(mrXMoves(player, location, currentRound, detectives, doubleUsage, useSecret));
         else {
             moves.addAll(possibleStandardMoves(player, location, false, detectives));
             //if the detective can't make a ticket move, they make a pass move
@@ -148,7 +150,7 @@ public class ValidMoves{
         return moves;
     }
     
-    private static boolean useSecret(int currentRound) {          
+    private static boolean useSecretInDouble(int currentRound) { 
         return currentRound == rounds.size() || !rounds.get(currentRound);
     }
     
