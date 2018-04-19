@@ -135,7 +135,8 @@ public class Athena implements PlayerFactory {
             System.out.println("Total: " + (double) (end - start) / 1000000000 + " secs");*/
 
             changeRoot(move);
-            //displayMrXMove(move, location);           
+            //System.out.println(move);
+            displayMrXMove(move, location);           
             callback.accept(move);
 
         }
@@ -261,7 +262,10 @@ public class Athena implements PlayerFactory {
             boolean currRoundIsReveal = currentRound < GameState.getRounds().size() && GameState.getRounds().get(currentRound);
             boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
             double score = ScoreGenerator.scoreState(state);
-            return (!currRoundIsReveal && lastRoundIsReveal && inDanger(score, true)) || inDanger(score, false);
+            System.out.print(currentRound);
+            System.out.print(": ");
+            System.out.println((!currRoundIsReveal && lastRoundIsReveal && inDanger(score, true)) || inDanger(score, false));
+            return !currRoundIsReveal && ((lastRoundIsReveal && inDanger(score, true)) || inDanger(score, false));
         }
 
         private boolean inDanger(double score, boolean revealed) {

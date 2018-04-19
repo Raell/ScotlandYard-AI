@@ -246,6 +246,7 @@ public class GameState {
             nextState.ticketsSinceLastKnown.add(move.secondMove().ticket());
         }
         ScotlandYardPlayer player = nextState.cToP.get(move.colour());
+        player.removeTicket(Ticket.DOUBLE);
         player.removeTicket(move.firstMove().ticket());
         player.removeTicket(move.secondMove().ticket());
         player.location(move.finalDestination());

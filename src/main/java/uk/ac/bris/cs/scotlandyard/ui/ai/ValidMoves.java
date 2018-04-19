@@ -83,7 +83,7 @@ public class ValidMoves{
     private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, Set<TicketMove> tMoves,
             int currentRound, List<ScotlandYardPlayer> detectives){
         Set<Move> doublemoves = new HashSet<>();
-
+        
         //adds the doublemoves
         if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
             for(TicketMove firstMove :tMoves) {
