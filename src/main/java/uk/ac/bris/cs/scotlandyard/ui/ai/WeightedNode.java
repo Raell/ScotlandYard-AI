@@ -7,7 +7,6 @@ package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
 
@@ -21,16 +20,6 @@ public class WeightedNode<X> implements Comparable<WeightedNode<X>> {
     private Double weight;
     private int moves;
     private Map<Ticket, Integer> tickets;
-
-    /*public WeightedNode(X index) {
-        this.index = index;
-        this.weight = 0.0;
-    }
-    
-    public WeightedNode(X index, Double weight) {
-        this.index = index;
-        this.weight = weight;
-    }*/
     
     public WeightedNode(Node<X> n) {
         this.node = n;
@@ -38,16 +27,6 @@ public class WeightedNode<X> implements Comparable<WeightedNode<X>> {
         this.moves = 0;
         this.tickets = new HashMap<>();
     }
-    
-    /*public void setTickets(int taxiCount, int busCount, int undergroundCount) {
-        tickets.put(Ticket.TAXI, taxiCount);
-        tickets.put(Ticket.BUS, busCount);
-        tickets.put(Ticket.UNDERGROUND, undergroundCount);
-    }
-    
-    public int getTicketsCount(Ticket t) {
-        return tickets.containsKey(t) ? tickets.get(t) : 0;
-    }*/
 
     public X value() {
         return node.value();
@@ -73,11 +52,7 @@ public class WeightedNode<X> implements Comparable<WeightedNode<X>> {
         this.weight = weight;
     }  
     
-    /*@Override
-    public boolean equals(Object o) {
-        return node.equals(o);
-    }*/
-    
+    @Override
     public int compareTo(WeightedNode<X> weightedNode) {
     	return Double.compare(this.weight, weightedNode.getWeight());  
     }
