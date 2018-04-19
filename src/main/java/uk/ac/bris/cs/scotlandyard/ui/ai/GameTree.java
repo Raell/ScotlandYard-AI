@@ -17,11 +17,6 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
 public class GameTree extends NodeTree {
 
     private final GameState GameState;
-    /*private double value;
-    private final int playerCount;
-    private final int depth;
-    private final List<GameTree> children;*/
-
 
     public GameTree(GameState state, double value, int playerCount, int depth, Move move, Colour currentPlayer) {
         super(value, playerCount, depth, move, null, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, currentPlayer);

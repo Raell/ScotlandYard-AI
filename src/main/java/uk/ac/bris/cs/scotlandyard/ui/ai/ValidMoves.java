@@ -136,8 +136,7 @@ public class ValidMoves{
     //returns the valid mvoes for the given player
     public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean doubleUsage, boolean useSecret) {
         Set<Move> moves = new HashSet<>();
-        //if(!scoreChecking)
-            //System.out.println("UseDouble: " + doubleUsage);
+        
         if(player.isMrX())
             moves.addAll(mrXMoves(player, location, currentRound, detectives, doubleUsage, useSecret));
         else {
