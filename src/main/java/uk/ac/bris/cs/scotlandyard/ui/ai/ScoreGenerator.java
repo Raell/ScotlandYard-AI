@@ -35,7 +35,6 @@ public class ScoreGenerator {
     public static void initialize(Graph<Integer, Transport> graph, Map<Colour, Map<Ticket, Integer>> initTickets) {
         ScoreGenerator.graph = graph;
         ScoreGenerator.initMrXTickets = initTickets.get(Colour.BLACK);
-        //ScoreGenerator.initTickets = initTickets;
         
         for(Colour c : initTickets.keySet()) {
             if(c.isMrX())
@@ -49,11 +48,6 @@ public class ScoreGenerator {
     }
     
     private static void preProcessPrim() {
-        /*for(Map.Entry<Colour, DijkstraCalculator> entry : dijkstraMap.entrySet()) {
-            Colour c = entry.getKey();
-            DijkstraCalculator d = entry.getValue();
-            primGraph.put(c, d.getResult(mrXLocation));
-        }*/
         
         for(Node<Integer> n : graph.getNodes()) {
             int location = n.value();
@@ -81,9 +75,7 @@ public class ScoreGenerator {
     }
     
     public static double scoreState(GameState g) {
-        //TODO Run Dijkstra algorithm on each detecetive to get distance
-        //DijkstraCalculator d = new DijkstraCalculator(graph);
-        //final long start = System.nanoTime();
+        //Run Dijkstra algorithm on each detecetive to get distance
         List<Double> distanceScore = new ArrayList<>();
         
         int mrXLocation = g.getPlayerLocation(Colour.BLACK);
@@ -98,48 +90,13 @@ public class ScoreGenerator {
             distanceScore.add(distance);
         }
         
-        //System.out.println("Distance: " + (double) (end - start) / 1000000 + " millisecs");
-        
         double score = calculateDistanceScore(distanceScore);
         score *= availableMovesFactor(g);
         score *= contextualFactor(g);
         score *= specialTicketsFactor(g);
-        
-        //final long end = System.nanoTime();
-        //Athena.scoreTimes.add(end - start);
         return score;        
         
     }
-    
-    /*public static double scoreState(GameState g) {
-        //TODO Run Dijkstra algorithm on each detecetive to get distance
-        //DijkstraCalculator d = new DijkstraCalculator(graph);
-        List<Double> distanceScore = new ArrayList<>();
-        
-        for(ScotlandYardPlayer p : g.getPlayers()) {         
-            if(p.isMrX())
-                continue;           
-            if(g.getPlayerLocation(Colour.BLACK) == g.getPlayerLocation(p.colour()))
-                return 0;
-            
-            Map<Ticket, Integer> tickets = g.getPlayerTickets(p.colour());
-            DijkstraCalculator d = new DijkstraCalculator(graph, tickets);         
-            DirectedGraph<Integer, Double> path = d.getResult(g.getPlayerLocation(Colour.BLACK), g.getPlayerLocation(p.colour()));
-            double distance = getDistanceValue(path);
-            if(distance > 0)
-                distanceScore.add(distance);
-        }
-        
-        if(distanceScore.isEmpty())
-            return Double.POSITIVE_INFINITY;
-        else {
-            double score = calculateDistanceScore(distanceScore, g.getPlayers().size() - 1);
-            score *= availableMovesFactor(g);
-            score *= contextualFactor(g);
-            score *= specialTicketsFactor(g);
-            return score;        
-        }
-    }*/
     
     private static double calculateDistanceScore(List<Double> distances) {
         Collections.sort(distances);
@@ -199,11 +156,5 @@ public class ScoreGenerator {
             });
         }
     }
-    
-    /*private static double getDistanceValue(DirectedGraph<Integer, Double> path) {
-        double value = 0;
-        value = path.getEdges().stream().map((e) -> e.data()).reduce(value, (accumulator, _item) -> accumulator + _item);
-        return value * Math.pow(path.getEdges().size(), 2);
-    }*/
-    
+  
 }
