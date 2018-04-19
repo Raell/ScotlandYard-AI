@@ -258,9 +258,10 @@ public class Athena implements PlayerFactory {
             if(state.getCurrentPlayer().isDetective())
                 return false;
             int currentRound = state.getCurrentRound();
-            List<Boolean> rounds = GameState.getRounds();
+            boolean currRoundIsReveal = currentRound < GameState.getRounds().size() && GameState.getRounds().get(currentRound);
+            boolean lastRoundIsReveal = currentRound > 0 && GameState.getRounds().get(currentRound - 1);
             double score = ScoreGenerator.scoreState(state);
-            return ((currentRound == rounds.size() || rounds.get(currentRound)) && inDanger(score, true)) || inDanger(score, false);
+            return (!currRoundIsReveal && lastRoundIsReveal && inDanger(score, true)) || inDanger(score, false);
         }
 
         private boolean inDanger(double score, boolean revealed) {

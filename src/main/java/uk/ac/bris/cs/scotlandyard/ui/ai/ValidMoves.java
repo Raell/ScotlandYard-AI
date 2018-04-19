@@ -114,13 +114,9 @@ public class ValidMoves{
 
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
-             
-        if(useSecret){              
-            tMoves.addAll(possibleStandardMoves(player, location, true, detectives));
-        }
-        else {
-            tMoves.addAll(possibleStandardMoves(player, location, false, detectives)); 
-        }
+                           
+        tMoves.addAll(possibleStandardMoves(player, location, useSecret, detectives));
+        
 
         moves.addAll(tMoves);
             
