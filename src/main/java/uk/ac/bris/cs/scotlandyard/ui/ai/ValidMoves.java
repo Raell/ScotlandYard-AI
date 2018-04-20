@@ -5,7 +5,6 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

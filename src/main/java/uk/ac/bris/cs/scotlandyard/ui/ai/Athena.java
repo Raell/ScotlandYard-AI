@@ -20,7 +20,6 @@ import uk.ac.bris.cs.scotlandyard.ai.Visualiser;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.DoubleMove;
 import uk.ac.bris.cs.scotlandyard.model.Move;
-import uk.ac.bris.cs.scotlandyard.model.PassMove;
 import uk.ac.bris.cs.scotlandyard.model.Player;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardPlayer;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYardView;
@@ -33,7 +32,7 @@ public class Athena implements PlayerFactory {
     
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
-    private static final int SEARCH_DEPTH = 6;
+    private static final int SEARCH_DEPTH = 8;
     private static final double DANGER_THRESHOLD = 25.0;
     
     @Override
