@@ -34,9 +34,10 @@ public class Athena implements PlayerFactory {
     private final MyPlayer player = new MyPlayer();
     //The number of connections from the root to the bottom of tree (root = 0)
     private static final int SEARCH_DEPTH = 6;
-    private static final double DANGER_SCORE = 25.0;
+    private static final double DANGER_THRESHOLD = 25.0;
     
     @Override
+    //Creates a new player
     public Player createPlayer(Colour colour) {
         if(colour != Colour.BLACK)
             throw new IllegalArgumentException("Can only use Athena for Mr X.");
@@ -44,6 +45,7 @@ public class Athena implements PlayerFactory {
     }
 
     @Override
+    //Runs before game starts
     public void ready(Visualiser visualiser,
                ResourceProvider provider) {
         player.updateVisualiserAndProvider(visualiser, provider);
@@ -63,6 +65,7 @@ public class Athena implements PlayerFactory {
         }
 
         @Override
+        //Generates a tree with scored states and choose move after alpha-beta pruning
         public void makeMove(ScotlandYardView view, int location, Set<Move> moves,
                         Consumer<Move> callback) {
             
@@ -72,24 +75,26 @@ public class Athena implements PlayerFactory {
             callback.accept(move);
 
         }
-
+        
+        //Called once in the first round to initialize scoring 
         private void initializeGame(ScotlandYardView view, GameState state) {
             state.getPlayers().forEach(p -> initTickets.put(p.colour(), state.getPlayerTickets(p.colour())));
             ScoreGenerator.initialize(view.getGraph(), initTickets);
+            ValidMoves.initialize(view.getGraph(), view.getRounds());
         }
-
+        
+        //Initializes tree root and generates the rest of the tree
         private void initialize(ScotlandYardView view, int location) {
             GameState state = new GameState(view, location); 
             GameState.setRounds(view.getRounds());
-            root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH, null, Colour.BLACK);
-            ValidMoves.initialize(view.getGraph(), view.getRounds());
+            root = new GameTree(state, Double.NEGATIVE_INFINITY, state.getPlayers().size(), SEARCH_DEPTH, null, Colour.BLACK);           
             if(view.getCurrentRound() == 0)
                 initializeGame(view, state);     
             generateNextStates(root, state, SEARCH_DEPTH);         
         }
-
+        
+        //Recursively generates nodes
         private void generateNextStates(NodeTree parent, GameState state, int depth) {
-
             if(depth <= 0 || parent.getAlpha() >= parent.getBeta())
                 return;
 
@@ -102,12 +107,13 @@ public class Athena implements PlayerFactory {
                     useDouble(state), 
                     useSecret(state)
             );
-
+            
+            //Generates child nodes from possible valid movess
             for(Move move : validmoves) { 
                 GameState nextState = state.nextState(move);
                 NodeTree child;
                 
-                if(depth == 1 || isMrXCaught(nextState.getPlayerLocation(Colour.BLACK), move)) {
+                if(depth == 1 || nextState.isGameOver()) {
                     double value = ScoreGenerator.scoreState(nextState);
                     child = new GameTree(nextState, value, state.getPlayers().size(), SEARCH_DEPTH, move, nextState.getCurrentPlayer().colour());
                     parent.add(child);                                                         
@@ -117,13 +123,15 @@ public class Athena implements PlayerFactory {
                     generateNextStates(child, nextState, depth - 1);
                 }
                 
+                //Clear children after processing values
                 updateAlphaBeta(child);
                 if(parent != root)
                     parent.remove(child);
 
             }  
         }
-
+        
+        //Updates alpha-beta values
         private void updateAlphaBeta(NodeTree t) {
             NodeTree parent = t.getParent();
             if(parent == null)
@@ -141,7 +149,8 @@ public class Athena implements PlayerFactory {
                 }
             }
         }
-
+        
+        //Deteremines whether MrX should use Double tickets
         private boolean useDouble(GameState state) {
             if(state.getCurrentPlayer().isDetective())
                 return false;
@@ -152,6 +161,7 @@ public class Athena implements PlayerFactory {
             return ((currRoundIsReveal || lastRoundIsReveal) && inDanger(score, true)) || inDanger(score, false);
         }
         
+        //Determines whether MrX should Secret tickets
         private boolean useSecret(GameState state) {
             if(state.getCurrentPlayer().isDetective())
                 return false;
@@ -161,21 +171,14 @@ public class Athena implements PlayerFactory {
             double score = ScoreGenerator.scoreState(state);
             return !currRoundIsReveal && ((lastRoundIsReveal && inDanger(score, true)) || inDanger(score, false));
         }
-
+        
+        //Determines whether MrX is within the danger threshold
         private boolean inDanger(double score, boolean revealed) {
-            double danger = revealed ? DANGER_SCORE : DANGER_SCORE * 0.5;
+            double danger = revealed ? DANGER_THRESHOLD : DANGER_THRESHOLD * 0.5;
             return score <= danger;
         }
-
-        private boolean isMrXCaught(int mrXLocation, Move move) {
-            if(move.colour().isMrX() || move.getClass() == PassMove.class)
-                return false;
-            else {
-                TicketMove tMove = (TicketMove) move;
-                return tMove.destination() == mrXLocation;
-            }
-        }
-
+                
+        //Displays MrX location on game map
         private void displayMrXMove(Move move, int location) {
             List<Point2D> dest = new ArrayList<>();
 

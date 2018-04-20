@@ -15,6 +15,7 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
  *
  * @author Raell
  */
+//A tree that contains alpha-beta values for a sequence of moves originating from the root game state
 public class NodeTree {
     private double value;
     private final Move move;
@@ -38,10 +39,12 @@ public class NodeTree {
         this.currentPlayer = currentPlayer;
     }
     
+    //Returns list of children
     public List<NodeTree> getChildren() {
         return Collections.unmodifiableList(children);
     }
     
+    //Add a new child from move
     public NodeTree add(Move move, double alpha, double beta, Colour currentPlayer) {
         Double initialValue = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         NodeTree child = new NodeTree(initialValue, playerCount, depth, move, this, alpha, beta, currentPlayer);
@@ -49,76 +52,68 @@ public class NodeTree {
         return child;
     }
     
+    //Add a new child from NodeTree
     public void add(NodeTree t) {
         t.setParent(this);
         children.add(t);
     }
     
-    public void resetTree() {
-        if(!children.isEmpty()) {
-            this.value = (isMaximiser()) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-            this.alpha = Double.NEGATIVE_INFINITY;
-            this.beta = Double.POSITIVE_INFINITY;
-            children.forEach(c -> c.resetTree());
-        }
-    }
-    
+    //Sets the parent of the node
     public void setParent(NodeTree parent) {
         this.parent = parent;
     }
     
+    //Returns current player
     public Colour getCurrentPlayer() {
         return currentPlayer;
     }
     
+    //Returns parent node
     public NodeTree getParent() {
         return parent;
     }
     
+    //Returns alpha value
     public double getAlpha() {
         return alpha;
     }
     
+    //Sets alpha value
     public void setAlpha(double a) {
         this.alpha = a;
     }
     
+    //Returns beta value
     public double getBeta() {
         return beta;
     }
     
+    //Sets beta value
     public void setBeta(double b) {
         this.beta = b;
     }
     
+    //Remove tree from list of children
     public void remove(NodeTree t) {
         this.children.remove(t);
     }
      
+    //Checks if this is a maximiser node
     public final Boolean isMaximiser() {
         return (currentPlayer == Colour.BLACK);
     }
-
-    public int getHeight() {
-        if(children.isEmpty())
-            return 0;
-        else {
-            int height = 0;
-            for(NodeTree c : children) {
-                height = Math.max(height, c.getHeight());
-            }
-            return height + 1;
-        }
-    }
     
+    //Returns move
     public Move getMove() {
         return move;
     }
     
+    //Sets value of node
     public void setValue(double value) {
         this.value = value;
     }
     
+    //Returns value of node
     public double getValue() {
         return value;
     }
