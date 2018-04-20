@@ -52,7 +52,7 @@ public abstract class GraphCalculator {
         for (Node<Integer> node : graph.getNodes()) {
             ourResult.addNode(node);
             
-            WeightedNode<Integer> wNode = new WeightedNode(node);
+            WeightedNode<Integer> wNode = new WeightedNode<>(node);
             weightedNodeMap.put(node, wNode);
             
             if(!node.value().equals(startNodeID)) {
