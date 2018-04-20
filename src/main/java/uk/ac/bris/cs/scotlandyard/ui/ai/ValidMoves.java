@@ -25,22 +25,24 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author Raell
  */
+//Class that contains static methods for generating a list of valid moves
 public class ValidMoves{ 
+    
     private static Graph<Integer, Transport> graph;
-    //private List<ScotlandYardPlayer> detectives;
     private static List<Boolean> rounds;
     
+    //Initialize class variables
     public static void initialize(Graph<Integer, Transport> g, List<Boolean> r) {
         graph = g;
         rounds = r;
     }
     
-    //checks whether a player has enough tickets to make the move
+    //Checks whether a player has enough tickets to make the move
     private static boolean hasValidTicket(ScotlandYardPlayer player, Ticket t) {      
         return player.hasTickets(t);
     }
 
-    //checks whether a player has enough tickets to make the move
+    //Checks whether a player has enough tickets to make the move
     private static boolean hasValidTicket(ScotlandYardPlayer player, DoubleMove move) {
         if(move.hasSameTicket())
             return player.hasTickets(move.firstMove().ticket(), 2);
@@ -48,20 +50,16 @@ public class ValidMoves{
             return (player.hasTickets(move.firstMove().ticket()) && player.hasTickets(move.secondMove().ticket()));
     }
 
-    //returns all the ticket moves a player can make, possibly with secret tickets 
-    //if the player is mrX
+    //Returns all the ticket moves a player can make, possibly with secret tickets if the player is mrX
     private static Set<TicketMove> possibleStandardMoves(ScotlandYardPlayer player, int location, boolean secret, List<ScotlandYardPlayer> detectives) {   
+        
         Set<TicketMove> moves = new HashSet<>();
-
-
-        //gets the edges connected to the current node
+        //Gets the edges connected to the current node
         Node<Integer> locNode = graph.getNode(location);        
         Collection<Edge<Integer, Transport>> fromEdges = graph.getEdgesFrom(locNode);
 
-        //creates the ticket moves
+        //Creates the ticket moves
         fromEdges.forEach((edge) -> {
-            //Ticket ticket = secret ? Ticket.SECRET : Ticket.fromTransport(edge.data());
-            //TicketMove move = new TicketMove(player.colour(), ticket, edge.destination().value());
             if (detectives.stream().noneMatch(p -> p.location() == edge.destination().value())) {               
                 Ticket ticket = Ticket.fromTransport(edge.data());
                
@@ -70,21 +68,18 @@ public class ValidMoves{
                 
                 if(secret && hasValidTicket(player, Ticket.SECRET)) {
                     moves.add(new TicketMove(player.colour(), Ticket.SECRET, edge.destination().value()));
-                }
-                
+                }               
             }
         });
-
         return moves;
-
     }
 
-    //gets the possible double moves mrX can make
+    //Gets the possible double moves MrX can make
     private static Set<Move> possibleDoubleMoves(ScotlandYardPlayer player, Set<TicketMove> tMoves,
             int currentRound, List<ScotlandYardPlayer> detectives){
         Set<Move> doublemoves = new HashSet<>();
         
-        //adds the doublemoves
+        //Adds the doublemoves
         if(player.hasTickets(Ticket.DOUBLE) && currentRound + 2 <= rounds.size()){ 
             for(TicketMove firstMove :tMoves) {
                 if(firstMove.ticket() == Ticket.SECRET && !useSecretInDouble(currentRound + 1))
@@ -106,7 +101,7 @@ public class ValidMoves{
         return doublemoves;
     }
 
-    //returns the set of possible moves mrX can make
+    //Returns the set of possible moves mrX can make
     private static Set<Move> mrXMoves(ScotlandYardPlayer player, int location, 
             int currentRound, List<ScotlandYardPlayer> detectives,
             boolean doubleUsage, boolean useSecret) {
@@ -115,9 +110,7 @@ public class ValidMoves{
         //adds all the standard and secret ticket moves mrX can make
         Set<TicketMove> tMoves = new HashSet<>();
                            
-        tMoves.addAll(possibleStandardMoves(player, location, useSecret, detectives));
-        
-
+        tMoves.addAll(possibleStandardMoves(player, location, useSecret, detectives));       
         moves.addAll(tMoves);
             
         if(doubleUsage) {
@@ -129,7 +122,7 @@ public class ValidMoves{
         return moves;
     }
 
-    //returns the valid mvoes for the given player
+    //Returns the valid moves for the given player
     public static Set<Move> validMoves(ScotlandYardPlayer player, int location, int currentRound, List<ScotlandYardPlayer> detectives, boolean doubleUsage, boolean useSecret) {
         Set<Move> moves = new HashSet<>();
         
@@ -145,6 +138,7 @@ public class ValidMoves{
         return moves;
     }
     
+    //Checks if secret move should be used as part of double move
     private static boolean useSecretInDouble(int currentRound) { 
         return currentRound == rounds.size() || !rounds.get(currentRound);
     }

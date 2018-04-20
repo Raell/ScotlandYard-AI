@@ -5,8 +5,6 @@
  */
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
-import java.util.ArrayList;
-import java.util.List;
 import uk.ac.bris.cs.scotlandyard.model.Colour;
 import uk.ac.bris.cs.scotlandyard.model.Move;
 
@@ -14,6 +12,7 @@ import uk.ac.bris.cs.scotlandyard.model.Move;
  *
  * @author Raell
  */
+//A NodeTree that contains a game state (Root and bottom nodes)
 public class GameTree extends NodeTree {
 
     private final GameState GameState;
@@ -23,50 +22,14 @@ public class GameTree extends NodeTree {
         GameState = state;       
     }
     
-    public static GameTree swapRoot(NodeTree newRoot, GameState newState) {
-        GameTree root = new GameTree(newState, newRoot.getValue(), newRoot.playerCount, newRoot.depth, null, newState.getCurrentPlayer().colour());
-        newRoot.getChildren().forEach(c -> {
-            root.add(c);
-        });
-        return root;
-    }
-    
+    //Returns game state
     public GameState getState() {
         return new GameState(GameState, super.getMove());
     }
     
-    public List<GameTree> getBottomNodes() {
-        return reachBottom(this);
-    }
-    
-    private List<GameTree> reachBottom(NodeTree t) {
-        List<GameTree> list = new ArrayList<>();
-        if(t.getChildren().isEmpty() && t.getClass() == GameTree.class)
-            list.add((GameTree) t);
-        else {
-            t.getChildren().forEach((c) -> {
-                list.addAll(reachBottom(c));
-            });
-        }
-        return list;           
-    }
-    
-    public void toNodeTree() {
-        double value = isMaximiser() ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        NodeTree n = new NodeTree(value, this.playerCount, this.depth, GameState.getLastMove(), null, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, this.getCurrentPlayer());
-        this.getChildren().forEach(c -> {
-            n.add(c);
-        });
         
-        NodeTree p = this.getParent();
-        
-        if(p != null) {
-            p.add(n);
-            p.remove(this);
-        }
-    }
-    
     @Override
+    //Returns string representation of node
     public String toString() {
         return GameState.getCurrentPlayer().colour() + ": " + GameState.getCurrentPlayer().location();
     }

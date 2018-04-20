@@ -24,14 +24,15 @@ import uk.ac.bris.cs.scotlandyard.model.Transport;
  *
  * @author admin
  */
+//Class that contains static methods to score a game state
 public class ScoreGenerator {
-    //private Move selectedMove;
+    
     private static Graph<Integer, Transport> graph;
     private static Map<Ticket, Integer> initMrXTickets;
-    //private static Map<Colour, Map<Ticket, Integer>> initTickets;
     private static final Map<Colour, DijkstraCalculator> dijkstraMap = new HashMap<>();
     private static final Map<Integer, Map<Colour, DirectedGraph<Integer, Double>>> primMap = new HashMap<>();
        
+    //Initializes class variables
     public static void initialize(Graph<Integer, Transport> graph, Map<Colour, Map<Ticket, Integer>> initTickets) {
         ScoreGenerator.graph = graph;
         ScoreGenerator.initMrXTickets = initTickets.get(Colour.BLACK);
@@ -47,6 +48,7 @@ public class ScoreGenerator {
         
     }
     
+    //Preprocess prim's algorithm
     private static void preProcessPrim() {
         
         for(Node<Integer> n : graph.getNodes()) {
@@ -64,6 +66,7 @@ public class ScoreGenerator {
         }
     }
     
+    //Selects best move from root
     public static Move selectMove(GameTree root) {
         return root.getChildren()
                 .stream()
@@ -74,8 +77,12 @@ public class ScoreGenerator {
         
     }
     
+    //Returns a score value from game state
     public static double scoreState(GameState g) {
-        //Run Dijkstra algorithm on each detecetive to get distance
+        
+        if(g.isGameOver())
+            return g.mrXCaught() ? 0 : Double.POSITIVE_INFINITY;
+        
         List<Double> distanceScore = new ArrayList<>();
         
         int mrXLocation = g.getPlayerLocation(Colour.BLACK);
@@ -85,11 +92,10 @@ public class ScoreGenerator {
             Colour c = entry.getKey();
             DijkstraCalculator d = dijkstraMap.get(c);
             Double distance = d.getResult(entry.getValue(), g.getPlayerLocation(c));
-            if(distance == 0)
-                return 0;
             distanceScore.add(distance);
         }
         
+        //Modifiers are multiplied with raw distance score
         double score = calculateDistanceScore(distanceScore);
         score *= availableMovesFactor(g);
         score *= contextualFactor(g);
@@ -98,6 +104,7 @@ public class ScoreGenerator {
         
     }
     
+    //Sorts by distance and accumulate score with further distances contributing lesser to the score
     private static double calculateDistanceScore(List<Double> distances) {
         Collections.sort(distances);
         double score = 0;
@@ -110,12 +117,14 @@ public class ScoreGenerator {
         return score;
     }
     
+    //Provides a factor where MrX the more next available moves the AI has the higher the factor
     private static double availableMovesFactor(GameState g) {
         Set<Move> validmoves = ValidMoves.validMoves(g.getPlayer(Colour.BLACK), g.getPlayerLocation(Colour.BLACK), g.getCurrentRound(), g.getPlayers(), false, false);
         int moveCount = validmoves.size();       
         return (moveCount <= 5) ? ((moveCount == 0) ? 0.0 : 0.8) : 1.0;
     }
     
+    //Based on the number of possible locations based on last known location and tickets used since then, the more the higher the factor
     private static double contextualFactor(GameState g) {
         int lastKnownPos = g.getLastKnownPos();
         if(lastKnownPos != 0) {
@@ -130,6 +139,7 @@ public class ScoreGenerator {
             return 1;
     }
     
+    //Based on number of special tickets used, lesser weight in the later rounds
     private static double specialTicketsFactor(GameState g) {             
         double totalSpecialTickets = initMrXTickets.get(Ticket.DOUBLE) + initMrXTickets.get(Ticket.SECRET);      
         if(totalSpecialTickets == 0)
@@ -144,6 +154,7 @@ public class ScoreGenerator {
         return factor;
     }
     
+    //Updates possible positions for contextual factor
     private static void updatePositions(Set<Integer> possiblePos, List<Ticket> path, Node<Integer> nextNode) {
         if(path.isEmpty())
             possiblePos.add(nextNode.value());

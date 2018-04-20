@@ -18,7 +18,7 @@ import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.scotlandyard.model.Ticket;
 import uk.ac.bris.cs.scotlandyard.model.Transport;
 
-//CCOMS10009 Live Programming Example Code
+//Based on COMS10009 Live Programming Example Code
 //GraphCalculator: implements base algorithm for Prim's and Dijkstra's
 public abstract class GraphCalculator {
 
@@ -95,10 +95,9 @@ public abstract class GraphCalculator {
                 // get current distance of neighbour before
                 Double distance = wNeighbour.getWeight();
                 Double dScaled = (distance != Double.POSITIVE_INFINITY) ? (distance * Math.pow(wNeighbour.getMoves(), 2)) : Double.POSITIVE_INFINITY;
-                // get possible distance of neighbour AFTER considering 'newly added'
-
+                // get weight of edge
                 Double transportWeight = (double) totalTickets / tickets.get(Ticket.fromTransport(e.data()));
-                
+                // get possible distance of neighbour AFTER considering 'newly added'
                 Double possibleUpdate = update(distance, wCurrent.getWeight(), transportWeight);//* Math.pow(weightedNodeMap.get(currentNode).getMoves() + 1, 1);             
                 Double PUScaled = possibleUpdate * Math.pow(wCurrent.getMoves() + 1, 2);
                 // implement update only if beneficial
